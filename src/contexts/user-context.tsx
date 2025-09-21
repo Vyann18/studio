@@ -11,6 +11,7 @@ type UserContextType = {
   login: (email: string, password: string) => User | null;
   logout: () => void;
   addUser: (user: Omit<User, 'id' | 'role' | 'avatar'>) => User | null;
+  updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -71,6 +72,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return newUser;
   };
 
+  const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
+    const userIndex = users.findIndex(u => u.id === userId && u.password === oldPass);
+    if (userIndex === -1) {
+        return false; // User not found or old password incorrect
+    }
+
+    const updatedUsers = [...users];
+    updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: newPass };
+    setUsers(updatedUsers);
+
+    // Also update currentUser if it's the one being changed
+    if (currentUser && currentUser.id === userId) {
+        setCurrentUser({ ...currentUser, password: newPass });
+    }
+    return true;
+};
+
 
   return (
     <UserContext.Provider value={{ 
@@ -81,6 +99,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         addUser,
+        updateUserPassword
     }}>
       {children}
     </UserContext.Provider>
