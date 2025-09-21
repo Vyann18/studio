@@ -8,10 +8,12 @@ import type { RestockAlertsOutput } from '@/ai/flows/restock-alerts';
 import { AlertCircle, Bell, Bot, Calendar, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser } from '@/contexts/user-context';
+import { useInventory } from '@/contexts/inventory-context';
 
 
 export default function RestockAlertsPage() {
   const { currentUser } = useUser();
+  const { inventory } = useInventory();
   const [alerts, setAlerts] = useState<RestockAlertsOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function RestockAlertsPage() {
     setLoading(true);
     setError(null);
     setAlerts(null);
-    const result = await getRestockAlerts();
+    const result = await getRestockAlerts(inventory);
     if ('error' in result) {
       setError(result.error);
     } else {
@@ -29,7 +31,7 @@ export default function RestockAlertsPage() {
     setLoading(false);
   };
 
-  const canGenerate = currentUser.role === 'admin' || currentUser.role === 'manager';
+  const canGenerate = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
     <div className="space-y-6">

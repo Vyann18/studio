@@ -1,7 +1,6 @@
 'use client';
 
 import { notFound } from 'next/navigation';
-import { inventoryItems } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -11,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { useInventory } from '@/contexts/inventory-context';
 
 const chartConfig = {
   quantity: {
@@ -20,7 +20,8 @@ const chartConfig = {
 };
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const item = inventoryItems.find((i) => i.id === params.id);
+  const { inventory } = useInventory();
+  const item = inventory.find((i) => i.id === params.id);
 
   if (!item) {
     notFound();

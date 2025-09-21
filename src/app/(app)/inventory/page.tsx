@@ -14,29 +14,47 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Trash2 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { inventoryItems } from '@/lib/data';
 import type { InventoryItem } from '@/lib/types';
+import { AddProductDialog } from '@/components/add-product-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useInventory } from '@/contexts/inventory-context';
 
 
 export default function InventoryPage() {
   const { currentUser } = useUser();
+  const { inventory, adjustStock, removeInventoryItem } = useInventory();
   const { toast } = useToast();
-  const [products, setProducts] = React.useState<InventoryItem[]>(inventoryItems);
   const [searchQuery, setSearchQuery] = React.useState('');
   
   if (!currentUser) return null;
 
   const canManageStock = currentUser.role === 'admin' || currentUser.role === 'manager';
+  const canDeleteItem = currentUser.role === 'admin' || currentUser.role === 'manager';
 
   const handleStockAdjustment = (productId: string, adjustment: number) => {
-    setProducts(products.map(p => p.id === productId ? {...p, quantity: Math.max(0, p.quantity + adjustment)} : p));
+    adjustStock(productId, adjustment);
     toast({ title: "Stock Adjusted", description: `Stock for product ID ${productId} has been updated.`});
   }
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const handleRemoveItem = (productId: string) => {
+    removeInventoryItem(productId);
+    toast({ title: 'Item Removed', description: 'The inventory item has been successfully removed.' });
+  }
+
+  const filteredProducts = inventory.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const getStatusBadge = (quantity: number) => {
     if (quantity === 0) return <Badge variant="destructive">Out of Stock</Badge>;
@@ -55,10 +73,7 @@ export default function InventoryPage() {
         </div>
         <div className="flex-shrink-0">
           {canManageStock && (
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Product
-            </Button>
+            <AddProductDialog />
           )}
         </div>
       </div>
@@ -87,7 +102,8 @@ export default function InventoryPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Stock Quantity</TableHead>
-                  {canManageStock && <TableHead className="text-center">Actions</TableHead>}
+                  {canManageStock && <TableHead className="text-center">Adjust Stock</TableHead>}
+                  {canDeleteItem && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,11 +124,36 @@ export default function InventoryPage() {
                            <Button size="sm" variant="outline" onClick={() => handleStockAdjustment(product.id, -1)}>-</Button>
                         </TableCell>
                       )}
+                      {canDeleteItem && (
+                        <TableCell className="text-right">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the item.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleRemoveItem(product.id)} className="bg-destructive hover:bg-destructive/90">
+                                        Delete
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={canManageStock ? 5 : 4} className="h-24 text-center">
+                    <TableCell colSpan={canDeleteItem ? 6 : (canManageStock ? 5 : 4)} className="h-24 text-center">
                       No products found.
                     </TableCell>
                   </TableRow>

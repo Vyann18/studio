@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { inventoryItems } from '@/lib/data';
 import type { InventoryItem } from '@/lib/types';
 import { Download, FileText, Package, AlertTriangle, ChevronDown } from 'lucide-react';
 import {
@@ -17,19 +16,21 @@ import {
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { useInventory } from '@/contexts/inventory-context';
 
 type ReportType = 'stock-levels' | 'low-stock';
 
 export default function ReportsPage() {
+  const { inventory } = useInventory();
   const [reportData, setReportData] = useState<InventoryItem[] | null>(null);
   const [reportType, setReportType] = useState<ReportType | null>(null);
 
   const generateReport = (type: ReportType) => {
     setReportType(type);
     if (type === 'stock-levels') {
-      setReportData(inventoryItems);
+      setReportData(inventory);
     } else if (type === 'low-stock') {
-      setReportData(inventoryItems.filter(item => item.quantity > 0 && item.quantity <= 10));
+      setReportData(inventory.filter(item => item.quantity > 0 && item.quantity <= 10));
     }
   };
 
@@ -197,7 +198,7 @@ export default function ReportsPage() {
                         <TableCell>{item.sku}</TableCell>
                         <TableCell>{item.category}</TableCell>
                         <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>                      
                       </TableRow>
                     ))
                   ) : (

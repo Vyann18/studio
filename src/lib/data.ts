@@ -1,4 +1,4 @@
-import type { InventoryItem, User } from './types';
+import type { InventoryItem, User, Category } from './types';
 
 // NOTE: In a real application, you would NEVER store plain text passwords.
 // This is for demonstration purposes only.
@@ -32,6 +32,10 @@ export const users: User[] = [
     companyId: 'EJY1UT'
   },
 ];
+
+export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];
+export const suppliers: string[] = ['TechGear Inc.', 'Fashion Hub', 'Global Foods', 'PrintWorks', 'HomeEssence', 'SoundMax', 'ActiveLife'];
+
 
 export const inventoryItems: InventoryItem[] = [
   {
