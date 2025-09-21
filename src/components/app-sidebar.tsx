@@ -8,6 +8,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -29,13 +31,14 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { state } = useSidebar();
   
   return (
-    <Sidebar>
-      <SidebarHeader>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="h-16">
         <div className="flex items-center gap-2 p-2">
           <Package className="h-8 w-8 text-primary" />
-          <h1 className="text-xl font-bold">InventoryFlow</h1>
+           {state === 'expanded' && <h1 className="text-xl font-bold">InventoryFlow</h1>}
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -59,15 +62,12 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip={{ children: 'Settings' }}
-            >
-              <Link href="#">
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
+             <SidebarMenuButton asChild tooltip={{children: "Settings"}}>
+                <Link href="#">
+                    <Settings />
+                    <span>Settings</span>
+                </Link>
+             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
