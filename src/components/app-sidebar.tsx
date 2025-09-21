@@ -29,7 +29,7 @@ import { Button } from './ui/button';
 
 const allMenuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'employee', 'user'] },
+    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'user'] },
     { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee', 'user'] },
     { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user'] },
     { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
@@ -44,6 +44,7 @@ export function AppSidebar() {
 
   const menuItems = allMenuItems.filter(item => {
     if (currentUser.role === 'user') {
+        // Simplified role from a previous request
         return ['/sales', '/inventory', '/purchases'].includes(item.href);
     }
     return item.roles.includes(currentUser.role)
@@ -54,7 +55,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            <div className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</div>
+            <span className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</span>
         </div>
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleSidebar}>
             {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
