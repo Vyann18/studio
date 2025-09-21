@@ -22,10 +22,12 @@ import type { User } from '@/lib/types';
 import { AppSidebar } from './app-sidebar';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function AppHeader() {
   const { currentUser, setCurrentUser, users } = useUser();
   const router = useRouter();
+  const { toggleSidebar } = useSidebar();
 
 
   const getInitials = (name: string) => {

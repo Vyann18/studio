@@ -9,7 +9,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   useSidebar,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -21,6 +20,7 @@ import {
   Package,
   Settings,
   ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -28,13 +28,13 @@ import { useUser } from '@/contexts/user-context';
 import { Button } from './ui/button';
 
 const allMenuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-  { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'employee'] },
-  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee'] },
-  { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager'] },
-  { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
-  { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
-  { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
+    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'employee', 'user'] },
+    { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee', 'user'] },
+    { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user'] },
+    { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
+    { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
+    { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
 ];
 
 export function AppSidebar() {
@@ -42,17 +42,22 @@ export function AppSidebar() {
   const { currentUser } = useUser();
   const { state, toggleSidebar } = useSidebar();
 
-  const menuItems = allMenuItems.filter(item => item.roles.includes(currentUser.role));
+  const menuItems = allMenuItems.filter(item => {
+    if (currentUser.role === 'user') {
+        return ['/sales', '/inventory', '/purchases'].includes(item.href);
+    }
+    return item.roles.includes(currentUser.role)
+  });
 
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            <h1 className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</h1>
+            <div className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 data-[state=expanded]:rotate-180" onClick={toggleSidebar}>
-            <ChevronLeft />
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleSidebar}>
+            {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
         </Button>
       </SidebarHeader>
       <SidebarContent>
