@@ -29,9 +29,9 @@ import { Button } from './ui/button';
 
 const allMenuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'user'] },
+    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'user', 'employee'] },
     { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee', 'user'] },
-    { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user'] },
+    { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user', 'employee'] },
     { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
     { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
     { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
@@ -42,11 +42,11 @@ export function AppSidebar() {
   const { currentUser } = useUser();
   const { state, toggleSidebar } = useSidebar();
 
+  if (!currentUser) {
+    return null; // Or a loading skeleton
+  }
+
   const menuItems = allMenuItems.filter(item => {
-    if (currentUser.role === 'user') {
-        // Simplified role from a previous request
-        return ['/sales', '/inventory', '/purchases'].includes(item.href);
-    }
     return item.roles.includes(currentUser.role)
   });
 

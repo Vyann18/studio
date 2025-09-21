@@ -1,12 +1,16 @@
 import type { InventoryItem, User } from './types';
 
+// NOTE: In a real application, you would NEVER store plain text passwords.
+// This is for demonstration purposes only.
+// Passwords should be hashed and salted.
 export const users: User[] = [
   {
     id: 'user-1',
     name: 'Admin User',
-    email: 'admin@example.com',
+    email: 'admin123@example.com',
     role: 'admin',
     avatar: 'https://i.pravatar.cc/150?u=admin',
+    password: 'admin123'
   },
   {
     id: 'user-2',
@@ -14,6 +18,7 @@ export const users: User[] = [
     email: 'manager@example.com',
     role: 'manager',
     avatar: 'https://i.pravatar.cc/150?u=manager',
+    password: 'password123'
   },
   {
     id: 'user-3',
@@ -21,6 +26,7 @@ export const users: User[] = [
     email: 'employee@example.com',
     role: 'employee',
     avatar: 'https://i.pravatar.cc/150?u=employee',
+    password: 'password123'
   },
 ];
 

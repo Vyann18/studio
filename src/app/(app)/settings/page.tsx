@@ -32,13 +32,13 @@ import { Shield, Building, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const roles: Role[] = ['admin', 'user'];
+const roles: Role[] = ['admin', 'manager', 'employee', 'user'];
 
 export default function SettingsPage() {
   const { currentUser, users, setUsers } = useUser();
   const { toast } = useToast();
 
-  if (currentUser.role !== 'admin') {
+  if (!currentUser || currentUser.role !== 'admin') {
     return (
         <div className="flex items-center justify-center h-full">
             <Card className="w-full max-w-md">
@@ -54,14 +54,6 @@ export default function SettingsPage() {
   }
 
   const handleRoleChange = (userId: string, newRole: Role) => {
-    if (users.find(u => u.id === userId)?.role === 'admin' && userId !== currentUser.id) {
-        toast({
-            title: 'Action Forbidden',
-            description: 'You cannot change the role of another administrator.',
-            variant: 'destructive',
-        });
-        return;
-    }
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     toast({
         title: 'Role Updated',
@@ -125,7 +117,7 @@ export default function SettingsPage() {
                       <Select 
                         defaultValue={user.role} 
                         onValueChange={(newRole: Role) => handleRoleChange(user.id, newRole)}
-                        disabled={user.id === currentUser.id}
+                        disabled={user.id === currentUser.id && currentUser.role === 'admin'}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a role" />

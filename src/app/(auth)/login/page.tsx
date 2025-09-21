@@ -12,14 +12,34 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/contexts/user-context';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { login } = useUser();
+    const { toast } = useToast();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const handleLogin = (event: React.FormEvent) => {
         event.preventDefault();
-        // In a real app, you'd have actual authentication logic here
-        router.push('/dashboard');
+        const loggedInUser = login(email, password);
+
+        if (loggedInUser) {
+            toast({
+                title: "Login Successful",
+                description: `Welcome back, ${loggedInUser.name}!`,
+            });
+            router.push('/dashboard');
+        } else {
+            toast({
+                title: "Login Failed",
+                description: "Invalid email or password. Please try again.",
+                variant: "destructive",
+            });
+        }
     }
 
   return (
@@ -40,6 +60,8 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 />
             </div>
             <div className="grid gap-2">
@@ -49,7 +71,13 @@ export default function LoginPage() {
                     Forgot your password?
                 </Link>
                 </div>
-                <Input id="password" type="password" required />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
             </div>
             <Button type="submit" className="w-full">
                 Login

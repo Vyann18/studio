@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -16,31 +17,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PlusCircle, Search } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-};
-
-const initialProducts: Product[] = [
-    { id: '1', name: 'Wireless Mouse', price: 29.99, quantity: 150 },
-    { id: '2', name: 'Men\'s T-Shirt', price: 19.99, quantity: 8 },
-    { id: '3', name: 'Organic Coffee Beans', price: 22.50, quantity: 75 },
-    { id: '4', name: 'The Great Gatsby', price: 15.00, quantity: 120 },
-    { id: '5', name: 'Scented Candle', price: 18.00, quantity: 200 },
-    { id: '6', name: 'Bluetooth Speaker', price: 99.99, quantity: 0 },
-];
+import { inventoryItems } from '@/lib/data';
+import type { InventoryItem } from '@/lib/types';
 
 
 export default function InventoryPage() {
   const { currentUser } = useUser();
   const { toast } = useToast();
-  const [products, setProducts] = React.useState<Product[]>(initialProducts);
+  const [products, setProducts] = React.useState<InventoryItem[]>(inventoryItems);
   const [searchQuery, setSearchQuery] = React.useState('');
   
-  const isAdmin = currentUser.role === 'admin';
+  if (!currentUser) return null;
+
+  const canManageStock = currentUser.role === 'admin' || currentUser.role === 'manager';
 
   const handleStockAdjustment = (productId: string, adjustment: number) => {
     setProducts(products.map(p => p.id === productId ? {...p, quantity: Math.max(0, p.quantity + adjustment)} : p));
@@ -65,7 +54,7 @@ export default function InventoryPage() {
           </p>
         </div>
         <div className="flex-shrink-0">
-          {isAdmin && (
+          {canManageStock && (
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add New Product
@@ -98,18 +87,22 @@ export default function InventoryPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Stock Quantity</TableHead>
-                  {isAdmin && <TableHead className="text-center">Actions</TableHead>}
+                  {canManageStock && <TableHead className="text-center">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/inventory/${product.id}`} className="hover:underline">
+                          {product.name}
+                        </Link>
+                      </TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
                       <TableCell>{getStatusBadge(product.quantity)}</TableCell>
                       <TableCell className="text-right">{product.quantity}</TableCell>
-                      {isAdmin && (
+                      {canManageStock && (
                         <TableCell className="text-center space-x-2">
                            <Button size="sm" variant="outline" onClick={() => handleStockAdjustment(product.id, 1)}>+</Button>
                            <Button size="sm" variant="outline" onClick={() => handleStockAdjustment(product.id, -1)}>-</Button>
@@ -119,7 +112,7 @@ export default function InventoryPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center">
+                    <TableCell colSpan={canManageStock ? 5 : 4} className="h-24 text-center">
                       No products found.
                     </TableCell>
                   </TableRow>
