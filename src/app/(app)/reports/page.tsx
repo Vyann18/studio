@@ -7,7 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { inventoryItems } from '@/lib/data';
 import type { InventoryItem } from '@/lib/types';
-import { Download, FileText, Package, AlertTriangle } from 'lucide-react';
+import { Download, FileText, Package, AlertTriangle, ChevronDown } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from '@/components/ui/dropdown-menu';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 type ReportType = 'stock-levels' | 'low-stock';
 
@@ -24,16 +33,91 @@ export default function ReportsPage() {
     }
   };
 
+  const getStatusText = (quantity: number): string => {
+    if (quantity === 0) return 'Out of Stock';
+    if (quantity <= 10) return 'Low Stock';
+    return 'In Stock';
+  };
+
   const getStatusBadge = (quantity: number) => {
-    if (quantity === 0) return <Badge variant="destructive">Out of Stock</Badge>;
-    if (quantity <= 10) return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Low Stock</Badge>;
-    return <Badge variant="secondary">In Stock</Badge>;
+    const status = getStatusText(quantity);
+    if (status === 'Out of Stock') return <Badge variant="destructive">{status}</Badge>;
+    if (status === 'Low Stock') return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">{status}</Badge>;
+    return <Badge variant="secondary">{status}</Badge>;
   };
   
   const reportTitles: Record<ReportType, string> = {
     'stock-levels': 'Full Stock Level Report',
     'low-stock': 'Low Stock Items Report'
   };
+
+  const downloadPDF = () => {
+    if (!reportData || !reportType) return;
+    
+    const doc = new jsPDF();
+    doc.text(reportTitles[reportType], 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 22);
+
+    (doc as any).autoTable({
+      startY: 28,
+      head: [['Item', 'SKU', 'Category', 'Status', 'Quantity']],
+      body: reportData.map(item => [
+        item.name,
+        item.sku,
+        item.category,
+        getStatusText(item.quantity),
+        item.quantity
+      ]),
+    });
+
+    doc.save(`${reportType}-report.pdf`);
+  };
+
+  const downloadXLSX = () => {
+    if (!reportData || !reportType) return;
+
+    const worksheet = XLSX.utils.json_to_sheet(reportData.map(item => ({
+      'Item': item.name,
+      'SKU': item.sku,
+      'Category': item.category,
+      'Status': getStatusText(item.quantity),
+      'Quantity': item.quantity,
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
+
+    XLSX.writeFile(workbook, `${reportType}-report.xlsx`);
+  };
+
+  const downloadCSV = () => {
+    if (!reportData || !reportType) return;
+
+    const headers = ['Item', 'SKU', 'Category', 'Status', 'Quantity'];
+    const csvContent = [
+      headers.join(','),
+      ...reportData.map(item => [
+        `"${item.name}"`,
+        item.sku,
+        item.category,
+        getStatusText(item.quantity),
+        item.quantity
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.href) {
+        URL.revokeObjectURL(link.href);
+    }
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${reportType}-report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -78,10 +162,20 @@ export default function ReportsPage() {
               <CardTitle>{reportTitles[reportType]}</CardTitle>
               <CardDescription>Generated on {new Date().toLocaleDateString()}</CardDescription>
             </div>
-            <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Download
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={downloadPDF}>PDF</DropdownMenuItem>
+                <DropdownMenuItem onClick={downloadXLSX}>Excel (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={downloadCSV}>CSV</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
