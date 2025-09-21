@@ -10,7 +10,8 @@ export const users: User[] = [
     email: 'adminuser@example.com',
     role: 'admin',
     avatar: 'https://i.pravatar.cc/150?u=admin',
-    password: 'vyan16231#'
+    password: 'vyan16231#',
+    companyId: 'EJY1UT'
   },
   {
     id: 'user-2',
@@ -18,7 +19,8 @@ export const users: User[] = [
     email: 'manager@example.com',
     role: 'manager',
     avatar: 'https://i.pravatar.cc/150?u=manager',
-    password: 'password123'
+    password: 'password123',
+    companyId: 'EJY1UT'
   },
   {
     id: 'user-3',
@@ -26,7 +28,8 @@ export const users: User[] = [
     email: 'employee@example.com',
     role: 'employee',
     avatar: 'https://i.pravatar.cc/150?u=employee',
-    password: 'password123'
+    password: 'password123',
+    companyId: 'EJY1UT'
   },
 ];
 
@@ -151,3 +154,5 @@ export const inventoryItems: InventoryItem[] = [
     ]
   },
 ];
+
+    

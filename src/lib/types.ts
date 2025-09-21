@@ -22,4 +22,12 @@ export type User = {
   role: Role;
   avatar: string;
   password?: string;
+  companyId: string;
 };
+
+export type Company = {
+    id: string;
+    name: string;
+};
+
+    

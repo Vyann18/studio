@@ -28,14 +28,25 @@ import { useUser } from '@/contexts/user-context';
 import type { User, Role } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, Building, PlusCircle, KeyRound } from 'lucide-react';
+import { Shield, Building, PlusCircle, KeyRound, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
 
 const roles: Role[] = ['admin', 'manager', 'employee', 'user'];
 
 export default function SettingsPage() {
-  const { currentUser, users, setUsers, updateUserPassword } = useUser();
+  const { currentUser, users, setUsers, updateUserPassword, removeUser } = useUser();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
@@ -46,6 +57,14 @@ export default function SettingsPage() {
     toast({
         title: 'Role Updated',
         description: `User role has been successfully changed to ${newRole}.`,
+    });
+  };
+
+  const handleRemoveUser = (userId: string) => {
+    removeUser(userId);
+    toast({
+      title: 'User Removed',
+      description: 'The user has been successfully removed.',
     });
   };
 
@@ -121,10 +140,11 @@ export default function SettingsPage() {
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead className="w-[180px]">Role</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {users.filter(u => u.companyId === currentUser.companyId).map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -140,7 +160,7 @@ export default function SettingsPage() {
                         <Select 
                           defaultValue={user.role} 
                           onValueChange={(newRole: Role) => handleRoleChange(user.id, newRole)}
-                          disabled={user.id === currentUser.id && currentUser.role === 'admin'}
+                          disabled={user.id === currentUser.id}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select a role" />
@@ -151,6 +171,31 @@ export default function SettingsPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {user.id !== currentUser.id && (
+                           <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button variant="ghost" size="icon">
+                               <Trash2 className="h-4 w-4 text-destructive" />
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 This action cannot be undone. This will permanently delete the user account.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Cancel</AlertDialogCancel>
+                               <AlertDialogAction onClick={() => handleRemoveUser(user.id)} className="bg-destructive hover:bg-destructive/90">
+                                 Delete
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -186,23 +231,36 @@ export default function SettingsPage() {
       </Card>
 
 
-      <Card>
-          <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Building /> Company Settings</CardTitle>
-              <CardDescription>Manage essential business information and preferences.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              <div className="space-y-2">
-                  <Label htmlFor="company-name">Company Name</Label>
-                  <Input id="company-name" defaultValue="InventoryFlow Inc." />
-              </div>
-              <div className="space-y-2">
-                  <Label htmlFor="company-address">Address</Label>
-                  <Input id="company-address" defaultValue="123 ERP Lane, Business City, 54321" />
-              </div>
-              <Button>Save Settings</Button>
-          </CardContent>
-      </Card>
+      {currentUser.role === 'admin' && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Building /> Company Settings</CardTitle>
+                <CardDescription>Manage essential business information and preferences.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="company-name">Company Name</Label>
+                    <Input id="company-name" defaultValue="InventoryFlow Inc." />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="company-address">Address</Label>
+                    <Input id="company-address" defaultValue="123 ERP Lane, Business City, 54321" />
+                </div>
+                 <div className="flex justify-between items-center rounded-lg border p-4">
+                    <div>
+                        <p className="font-medium">Add New Company</p>
+                        <p className="text-sm text-muted-foreground">Generate a new unique ID for another company.</p>
+                    </div>
+                    <Button variant="outline">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Company
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
+
+    

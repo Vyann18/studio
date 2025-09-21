@@ -1,52 +1,48 @@
 'use client';
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { User, Role } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
+import { companies as initialCompanies } from '@/lib/companies';
 
 type UserContextType = {
-  currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
+  currentUser: User | null | undefined; // undefined for initial loading state
+  companyIdVerified: boolean;
+  verifyCompanyId: (id: string) => boolean;
   users: User[];
-  setUsers: (users: User[]) => void;
+  companies: Company[];
   login: (email: string, password: string) => User | null;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'role' | 'avatar'>) => User | null;
+  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>) => User | null;
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
+  removeUser: (userId: string) => void;
+  setUsers: (users: User[]) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
+  const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
-  const handleSetCurrentUser = (user: User | null) => {
-    if (!user) {
+  useEffect(() => {
+    // On initial load, check if a user is stored in localStorage to persist session
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+        const user = JSON.parse(storedUser) as User;
+        const fullUser = users.find(u => u.id === user.id);
+        setCurrentUser(fullUser || null);
+    } else {
         setCurrentUser(null);
-        return;
     }
-    const userExists = users.find(u => u.id === user.id);
-    if (userExists) {
-      setCurrentUser(userExists);
-    }
-  }
-
-  const handleSetUsers = (updatedUsers: User[]) => {
-    setUsers(updatedUsers);
-    if (currentUser) {
-        const updatedCurrentUser = updatedUsers.find(u => u.id === currentUser.id);
-        if (updatedCurrentUser) {
-            setCurrentUser(updatedCurrentUser);
-        } else {
-            setCurrentUser(null); // Current user was deleted
-        }
-    }
-  }
+  }, [users]);
 
   const login = (email: string, password: string): User | null => {
     const user = users.find(u => u.email === email && u.password === password);
     if (user) {
       setCurrentUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
       return user;
     }
     return null;
@@ -54,17 +50,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setCurrentUser(null);
+    setCompanyIdVerified(false);
+    localStorage.removeItem('currentUser');
   };
 
-  const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar'>): User | null => {
+  const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>): User | null => {
     if (users.some(u => u.email === userData.email)) {
         return null; // User already exists
     }
 
+    // Note: In a real app, companyId would come from the verified company context
+    const tempCompanyId = "EJY1UT"; 
+
     const newUser: User = {
         id: `user-${Date.now()}`,
         ...userData,
-        role: 'user', // Default role for new signups
+        companyId: tempCompanyId,
+        role: 'user', // Default role
         avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
     };
 
@@ -75,31 +77,60 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
     const userIndex = users.findIndex(u => u.id === userId && u.password === oldPass);
     if (userIndex === -1) {
-        return false; // User not found or old password incorrect
+        return false;
     }
 
     const updatedUsers = [...users];
-    updatedUsers[userIndex] = { ...updatedUsers[userIndex], password: newPass };
+    updatedUsers[userIndex].password = newPass;
     setUsers(updatedUsers);
 
-    // Also update currentUser if it's the one being changed
     if (currentUser && currentUser.id === userId) {
-        setCurrentUser({ ...currentUser, password: newPass });
+        const updatedCurrentUser = { ...currentUser, password: newPass };
+        setCurrentUser(updatedCurrentUser);
+        localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
     }
     return true;
-};
+  };
 
+  const removeUser = (userId: string) => {
+    setUsers(users.filter(u => u.id !== userId));
+  };
+  
+  const handleSetUsers = (updatedUsers: User[]) => {
+    setUsers(updatedUsers);
+    if (currentUser) {
+        const updatedCurrentUser = updatedUsers.find(u => u.id === currentUser.id);
+        if (updatedCurrentUser) {
+            setCurrentUser(updatedCurrentUser);
+            localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
+        } else {
+            // Current user was deleted
+            logout();
+        }
+    }
+  }
+
+  const verifyCompanyId = (id: string): boolean => {
+    if (currentUser && companies.some(c => c.id === id) && currentUser.companyId === id) {
+        setCompanyIdVerified(true);
+        return true;
+    }
+    return false;
+  }
 
   return (
     <UserContext.Provider value={{ 
         currentUser, 
-        setCurrentUser: handleSetCurrentUser, 
         users, 
-        setUsers: handleSetUsers,
+        companies,
+        companyIdVerified,
+        verifyCompanyId,
         login,
         logout,
         addUser,
-        updateUserPassword
+        updateUserPassword,
+        removeUser,
+        setUsers: handleSetUsers
     }}>
       {children}
     </UserContext.Provider>
@@ -113,3 +144,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
