@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Table,
   TableBody,
@@ -12,19 +13,152 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PlusCircle, Users } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const sales = [
+const initialSales = [
     { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90 },
     { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90 },
     { id: 'INV-003', customer: 'Charlie Brown', date: '2024-05-26', status: 'Paid', total: 90.00 },
 ];
 
-const customers = [
+const initialCustomers = [
     { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com' },
     { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com' },
 ]
 
 export default function SalesPage() {
+    const [sales, setSales] = React.useState(initialSales);
+    const [customers, setCustomers] = React.useState(initialCustomers);
+    const { toast } = useToast();
+
+    const AddSaleDialog = () => {
+        const [open, setOpen] = React.useState(false);
+        const [customer, setCustomer] = React.useState('');
+        const [total, setTotal] = React.useState('');
+    
+        const handleAdd = () => {
+          if(!customer || !total) {
+            toast({ title: 'Error', description: 'Please fill all fields.', variant: 'destructive'});
+            return;
+          }
+          
+          const newSale = {
+            id: `INV-00${sales.length + 1}`,
+            customer,
+            date: new Date().toISOString().split('T')[0],
+            status: 'Pending',
+            total: parseFloat(total),
+          };
+    
+          setSales(prev => [...prev, newSale]);
+          toast({ title: 'Success', description: 'Sale added successfully.'});
+          setOpen(false);
+        }
+    
+        return (
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                     <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create New Sale
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create New Sale</DialogTitle>
+                        <DialogDescription>Enter the details of the new sale.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="customer" className="text-right">Customer</Label>
+                            <Select onValueChange={setCustomer} value={customer}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select a customer" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {customers.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="total" className="text-right">Total</Label>
+                            <Input id="total" type="number" value={total} onChange={e => setTotal(e.target.value)} className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleAdd}>Create Sale</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+      }
+
+    const AddCustomerDialog = () => {
+        const [open, setOpen] = React.useState(false);
+        const [name, setName] = React.useState('');
+        const [email, setEmail] = React.useState('');
+    
+        const handleAdd = () => {
+          if(!name || !email) {
+            toast({ title: 'Error', description: 'Please fill all fields.', variant: 'destructive'});
+            return;
+          }
+          
+          const newCustomer = {
+            id: `CUS-0${customers.length + 1}`,
+            name,
+            email,
+          };
+    
+          setCustomers(prev => [...prev, newCustomer]);
+          toast({ title: 'Success', description: 'Customer added successfully.'});
+          setOpen(false);
+        }
+    
+        return (
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Customer
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Customer</DialogTitle>
+                        <DialogDescription>Enter the details of the new customer.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Name</Label>
+                            <Input id="name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="email" className="text-right">Email</Label>
+                            <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleAdd}>Add Customer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+      }
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -34,10 +168,7 @@ export default function SalesPage() {
             Create new sales, view history, and manage customers.
           </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Sale
-        </Button>
+        <AddSaleDialog />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -85,10 +216,7 @@ export default function SalesPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex justify-end mb-4">
-                        <Button variant="outline" size="sm">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Customer
-                        </Button>
+                        <AddCustomerDialog />
                     </div>
                     <div className="space-y-4">
                        {customers.map(c => (
