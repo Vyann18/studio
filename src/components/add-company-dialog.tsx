@@ -17,10 +17,12 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, Copy } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from './ui/textarea';
 
 export function AddCompanyDialog() {
   const [open, setOpen] = React.useState(false);
   const [companyName, setCompanyName] = React.useState('');
+  const [companyAddress, setCompanyAddress] = React.useState('');
   const [generatedId, setGeneratedId] = React.useState('');
   const { addCompany } = useUser();
   const { toast } = useToast();
@@ -38,6 +40,7 @@ export function AddCompanyDialog() {
     if (open) {
       generateCompanyId();
       setCompanyName('');
+      setCompanyAddress('');
     }
   }, [open]);
 
@@ -50,10 +53,19 @@ export function AddCompanyDialog() {
       });
       return;
     }
+    if (!companyAddress.trim()) {
+        toast({
+          title: 'Error',
+          description: 'Company address cannot be empty.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
     addCompany({
       id: generatedId,
       name: companyName,
+      address: companyAddress,
     });
 
     toast({
@@ -75,7 +87,7 @@ export function AddCompanyDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Company
         </Button>
@@ -90,7 +102,7 @@ export function AddCompanyDialog() {
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="company-name" className="text-right">
-              Company Name
+              Name
             </Label>
             <Input
               id="company-name"
@@ -98,6 +110,18 @@ export function AddCompanyDialog() {
               onChange={(e) => setCompanyName(e.target.value)}
               className="col-span-3"
               placeholder="e.g., Acme Inc."
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="company-address" className="text-right">
+              Address
+            </Label>
+            <Textarea
+              id="company-address"
+              value={companyAddress}
+              onChange={(e) => setCompanyAddress(e.target.value)}
+              className="col-span-3"
+              placeholder="123 Main St, Anytown, USA"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">

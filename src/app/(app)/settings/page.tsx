@@ -29,7 +29,7 @@ import { useUser } from '@/contexts/user-context';
 import type { User, Role } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield, Building, PlusCircle, KeyRound, Trash2 } from 'lucide-react';
+import { Shield, Building, PlusCircle, KeyRound, Trash2, Copy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -49,7 +49,7 @@ import { AddCompanyDialog } from '@/components/add-company-dialog';
 const roles: Role[] = ['admin', 'manager', 'employee', 'user'];
 
 export default function SettingsPage() {
-  const { currentUser, users, setUsers, updateUserPassword, removeUser } = useUser();
+  const { currentUser, users, setUsers, updateUserPassword, removeUser, companies } = useUser();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
@@ -106,6 +106,14 @@ export default function SettingsPage() {
       .split(' ')
       .map((n) => n[0])
       .join('');
+  };
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied!',
+      description: 'Company ID copied to clipboard.',
+    });
   };
   
   if (!currentUser) {
@@ -237,25 +245,40 @@ export default function SettingsPage() {
       {currentUser.role === 'admin' && (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Building /> Company Settings</CardTitle>
-                <CardDescription>Manage essential business information and preferences.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><Building /> Company Management</CardTitle>
+                <CardDescription>Manage company profiles and unique IDs.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="company-name">Company Name</Label>
-                    <Input id="company-name" defaultValue="InventoryFlow Inc." />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="company-address">Address</Label>
-                    <Input id="company-address" defaultValue="123 ERP Lane, Business City, 54321" />
-                </div>
-                 <div className="flex justify-between items-center rounded-lg border p-4">
-                    <div>
-                        <p className="font-medium">Add New Company</p>
-                        <p className="text-sm text-muted-foreground">Generate a new unique ID for another company.</p>
-                    </div>
+                <div className="flex justify-end">
                     <AddCompanyDialog />
                 </div>
+                 <div className="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Company Name</TableHead>
+                                <TableHead>Unique ID</TableHead>
+                                <TableHead>Address</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {companies.map((company) => (
+                                <TableRow key={company.id}>
+                                    <TableCell className="font-medium">{company.name}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 font-mono">
+                                            <span>{company.id}</span>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCopyToClipboard(company.id)}>
+                                                <Copy className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{company.address}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                 </div>
             </CardContent>
         </Card>
       )}
