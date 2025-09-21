@@ -7,10 +7,10 @@ export const users: User[] = [
   {
     id: 'user-1',
     name: 'Admin User',
-    email: 'admin123@example.com',
+    email: 'adminuser@example.com',
     role: 'admin',
     avatar: 'https://i.pravatar.cc/150?u=admin',
-    password: 'admin123'
+    password: 'vyan16231#'
   },
   {
     id: 'user-2',
