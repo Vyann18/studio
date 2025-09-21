@@ -30,6 +30,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/user-context';
+
 
 const initialSuppliers = [
     { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics' },
@@ -37,8 +39,11 @@ const initialSuppliers = [
 ];
 
 export default function SuppliersPage() {
+    const { currentUser } = useUser();
     const [suppliers, setSuppliers] = React.useState(initialSuppliers);
     const { toast } = useToast();
+
+    const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
     
     const AddSupplierDialog = () => {
         const [open, setOpen] = React.useState(false);
@@ -112,7 +117,7 @@ export default function SuppliersPage() {
                 View and manage your supplier list.
             </p>
             </div>
-            <AddSupplierDialog />
+            {canManage && <AddSupplierDialog />}
         </div>
         <Card>
             <CardHeader>
@@ -127,7 +132,7 @@ export default function SuppliersPage() {
                             <TableHead>Name</TableHead>
                             <TableHead>Contact</TableHead>
                             <TableHead>Category</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            {canManage && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -136,19 +141,21 @@ export default function SuppliersPage() {
                             <TableCell className="font-medium">{supplier.name}</TableCell>
                             <TableCell>{supplier.contact}</TableCell>
                             <TableCell>{supplier.category}</TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4"/>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
+                            {canManage && (
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4"/>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            )}
                         </TableRow>
                         ))}
                     </TableBody>

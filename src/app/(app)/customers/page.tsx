@@ -30,6 +30,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/user-context';
 
 const initialCustomers = [
     { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50 },
@@ -37,8 +38,11 @@ const initialCustomers = [
 ];
 
 export default function CustomersPage() {
+    const { currentUser } = useUser();
     const [customers, setCustomers] = React.useState(initialCustomers);
     const { toast } = useToast();
+
+    const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
     const AddCustomerDialog = () => {
         const [open, setOpen] = React.useState(false);
@@ -106,7 +110,7 @@ export default function CustomersPage() {
             View and manage your customer list.
           </p>
         </div>
-        <AddCustomerDialog />
+        {canManage && <AddCustomerDialog />}
       </div>
         <Card>
             <CardHeader>
@@ -121,7 +125,7 @@ export default function CustomersPage() {
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Total Spent</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            {canManage && <TableHead className="text-right">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -130,19 +134,21 @@ export default function CustomersPage() {
                             <TableCell className="font-medium">{customer.name}</TableCell>
                             <TableCell>{customer.email}</TableCell>
                             <TableCell>${customer.totalSpent.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4"/>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
+                            {canManage && (
+                                <TableCell className="text-right">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreHorizontal className="h-4 w-4"/>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            )}
                         </TableRow>
                         ))}
                     </TableBody>

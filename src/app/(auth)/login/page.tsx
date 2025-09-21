@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     const handleLogin = (event: React.FormEvent) => {
         event.preventDefault();
-        const loggedInUser = login(email, password);
+        const loggedInUser = login(email.trim(), password);
 
         if (loggedInUser) {
             toast({
