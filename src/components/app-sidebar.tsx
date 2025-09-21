@@ -8,8 +8,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarTrigger,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -21,25 +19,30 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@/contexts/user-context';
+import type { Role } from '@/lib/types';
 
-const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/inventory', label: 'Inventory', icon: Boxes },
-  { href: '/reports', label: 'Reports', icon: FileText },
-  { href: '/restock-alerts', label: 'Restock Alerts', icon: Bell },
+const allMenuItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
+  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee'] },
+  { href: '/reports', label: 'Reports', icon: FileText, roles: ['admin', 'manager'] },
+  { href: '/restock-alerts', label: 'Restock Alerts', icon: Bell, roles: ['admin', 'manager'] },
+  { href: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { state } = useSidebar();
-  
+  const { currentUser } = useUser();
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(currentUser.role));
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16">
-        <div className="flex items-center gap-2 p-2">
+        <Link href="/dashboard" className="flex items-center gap-2 p-2">
           <Package className="h-8 w-8 text-primary" />
-           {state === 'expanded' && <h1 className="text-xl font-bold">InventoryFlow</h1>}
-        </div>
+          <h1 className="text-xl font-bold">InventoryFlow</h1>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -47,7 +50,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href)}
                 tooltip={{ children: item.label }}
               >
                 <Link href={item.href}>
@@ -63,7 +66,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
              <SidebarMenuButton asChild tooltip={{children: "Settings"}}>
-                <Link href="#">
+                <Link href="/settings">
                     <Settings />
                     <span>Settings</span>
                 </Link>

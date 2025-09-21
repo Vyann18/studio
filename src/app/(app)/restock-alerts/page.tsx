@@ -7,8 +7,11 @@ import { getRestockAlerts } from '@/lib/actions';
 import type { RestockAlertsOutput } from '@/ai/flows/restock-alerts';
 import { AlertCircle, Bell, Bot, Calendar, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useUser } from '@/contexts/user-context';
+
 
 export default function RestockAlertsPage() {
+  const { currentUser } = useUser();
   const [alerts, setAlerts] = useState<RestockAlertsOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +29,8 @@ export default function RestockAlertsPage() {
     setLoading(false);
   };
 
+  const canGenerate = currentUser.role === 'admin' || currentUser.role === 'manager';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -35,19 +40,21 @@ export default function RestockAlertsPage() {
             Use AI to predict when you need to reorder items.
           </p>
         </div>
-        <Button onClick={handleGenerateAlerts} disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Bot className="mr-2 h-4 w-4" />
-              Generate Alerts
-            </>
-          )}
-        </Button>
+        { canGenerate && (
+            <Button onClick={handleGenerateAlerts} disabled={loading}>
+            {loading ? (
+                <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+                </>
+            ) : (
+                <>
+                <Bot className="mr-2 h-4 w-4" />
+                Generate Alerts
+                </>
+            )}
+            </Button>
+        )}
       </div>
 
       {error && (
