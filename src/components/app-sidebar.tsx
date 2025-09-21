@@ -8,7 +8,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -18,13 +17,10 @@ import {
   Users,
   Package,
   Settings,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
-import { Button } from './ui/button';
 
 const allMenuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
@@ -39,7 +35,6 @@ const allMenuItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { currentUser } = useUser();
-  const { state, toggleSidebar } = useSidebar();
 
   if (!currentUser) {
     return null; // Or a loading skeleton
@@ -54,11 +49,8 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold data-[state=collapsed]:hidden">InventoryFlow</span>
+            <span className="text-lg font-semibold">InventoryFlow</span>
         </div>
-        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleSidebar}>
-            {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
-        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -67,7 +59,6 @@ export function AppSidebar() {
               <SidebarMenuButton
                 asChild
                 isActive={pathname.startsWith(item.href)}
-                tooltip={{ children: item.label }}
               >
                 <Link href={item.href}>
                   <item.icon />
@@ -82,7 +73,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {currentUser.role === 'admin' && (
              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{children: "User Management"}} isActive={pathname.startsWith('/settings')}>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')}>
                     <Link href="/settings">
                         <Users />
                         <span>User Management</span>
