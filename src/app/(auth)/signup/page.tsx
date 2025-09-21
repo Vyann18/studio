@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
@@ -36,6 +38,8 @@ export default function SignupPage() {
   const router = useRouter();
   const { addUser } = useUser();
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -128,7 +132,16 @@ export default function SignupPage() {
                     <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                        <Input type="password" {...field} />
+                      <div className="relative">
+                        <Input type={showPassword ? 'text' : 'password'} {...field} />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
+                        >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
