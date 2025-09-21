@@ -1,7 +1,6 @@
-"use client"
+'use client';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { User, Role } from '@/lib/types';
-import { inventoryItems } from '@/lib/data';
 import { users as initialUsers } from '@/lib/data';
 
 type UserContextType = {
@@ -26,7 +25,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const handleSetUsers = (updatedUsers: User[]) => {
     setUsers(updatedUsers);
-    // Also update current user if their info changed
     const updatedCurrentUser = updatedUsers.find(u => u.id === currentUser.id);
     if (updatedCurrentUser) {
         setCurrentUser(updatedCurrentUser);

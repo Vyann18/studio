@@ -28,9 +28,11 @@ import { useUser } from '@/contexts/user-context';
 import type { User, Role } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Shield } from 'lucide-react';
+import { Shield, Building, PlusCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-const roles: Role[] = ['admin', 'manager', 'employee'];
+const roles: Role[] = ['admin', 'user'];
 
 export default function SettingsPage() {
   const { currentUser, users, setUsers } = useUser();
@@ -52,7 +54,6 @@ export default function SettingsPage() {
   }
 
   const handleRoleChange = (userId: string, newRole: Role) => {
-    // Admins cannot have their role changed by another admin
     if (users.find(u => u.id === userId)?.role === 'admin' && userId !== currentUser.id) {
         toast({
             title: 'Action Forbidden',
@@ -80,7 +81,7 @@ export default function SettingsPage() {
        <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
-          Manage user roles and application settings.
+          Manage users and company information.
         </p>
       </div>
 
@@ -88,10 +89,16 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Shield /> User Management</CardTitle>
           <CardDescription>
-            Assign roles to users in the system.
+            Add new users and assign their roles in the system.
           </CardDescription>
         </CardHeader>
         <CardContent>
+        <div className="flex justify-end mb-4">
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add User
+            </Button>
+        </div>
         <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -118,7 +125,7 @@ export default function SettingsPage() {
                       <Select 
                         defaultValue={user.role} 
                         onValueChange={(newRole: Role) => handleRoleChange(user.id, newRole)}
-                        disabled={user.id === currentUser.id && user.role === 'admin'}
+                        disabled={user.id === currentUser.id}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a role" />
@@ -136,6 +143,24 @@ export default function SettingsPage() {
             </Table>
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+          <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Building /> Company Settings</CardTitle>
+              <CardDescription>Manage essential business information and preferences.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <div className="space-y-2">
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input id="company-name" defaultValue="InventoryFlow Inc." />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="company-address">Address</Label>
+                  <Input id="company-address" defaultValue="123 ERP Lane, Business City, 54321" />
+              </div>
+              <Button>Save Settings</Button>
+          </CardContent>
       </Card>
     </div>
   );

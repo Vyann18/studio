@@ -12,22 +12,27 @@ import {
 import {
   LayoutDashboard,
   Boxes,
-  FileText,
-  Bell,
-  Settings,
+  ShoppingCart,
+  Receipt,
+  Users,
+  Building,
   Package,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
-import type { Role } from '@/lib/types';
 
 const allMenuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee'] },
-  { href: '/reports', label: 'Reports', icon: FileText, roles: ['admin', 'manager'] },
-  { href: '/restock-alerts', label: 'Restock Alerts', icon: Bell, roles: ['admin', 'manager'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'user'] },
+  { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'user'] },
+  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'user'] },
+  { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'user'] },
+  { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
 ];
+
+const settingsMenuItems = [
+    { href: '/settings', label: 'Settings', icon: Building, roles: ['admin'] },
+]
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -40,7 +45,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link href="/dashboard" className="flex items-center gap-2">
           <Package className="h-6 w-6 text-primary" />
-          <h1 className="text-lg font-semibold">InventoryFlow</h1>
+          <h1 className="text-lg font-semibold">MiniERP</h1>
         </Link>
       </SidebarHeader>
       <SidebarContent>
@@ -67,7 +72,7 @@ export function AppSidebar() {
              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{children: "Settings"}} isActive={pathname.startsWith('/settings')}>
                     <Link href="/settings">
-                        <Settings />
+                        <Building />
                         <span>Settings</span>
                     </Link>
                 </SidebarMenuButton>

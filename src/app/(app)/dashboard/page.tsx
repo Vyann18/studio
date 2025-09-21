@@ -17,72 +17,22 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
-  Package,
   DollarSign,
   AlertTriangle,
-  ArrowUp,
-  ArrowDown,
+  ShoppingCart,
+  TrendingUp,
 } from 'lucide-react';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { inventoryItems } from '@/lib/data';
-import type { InventoryItem } from '@/lib/types';
-import Link from 'next/link';
-
-const chartData = [
-  { month: 'January', value: 186 },
-  { month: 'February', value: 305 },
-  { month: 'March', value: 237 },
-  { month: 'April', value: 173 },
-  { month: 'May', value: 209 },
-  { month: 'June', value: 214 },
-];
-
-const chartConfig = {
-  value: {
-    label: 'Items Sold',
-    color: 'hsl(var(--primary))',
-  },
-};
 
 export default function DashboardPage() {
-  const totalItems = inventoryItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0
-  );
-  const totalValue = inventoryItems.reduce(
-    (acc, item) => acc + item.quantity * item.price,
-    0
-  );
-  const lowStockItems = inventoryItems.filter(
-    (item) => item.quantity > 0 && item.quantity < 10
-  );
-  const outOfStockItems = inventoryItems.filter((item) => item.quantity === 0);
-
-  const recentlyAddedItems = [...inventoryItems]
-    .sort(
-      (a, b) =>
-        new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-    )
-    .slice(0, 5);
-
-  const getStatusBadge = (quantity: number) => {
-    if (quantity === 0) {
-      return <Badge variant="destructive">Out of Stock</Badge>;
-    }
-    if (quantity < 10) {
-      return (
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-          Low Stock
-        </Badge>
-      );
-    }
-    return <Badge variant="secondary">In Stock</Badge>;
-  };
+  const lowStockItems = [
+    { name: 'Men\'s T-Shirt', quantity: 8 },
+    { name: 'Bluetooth Speaker', quantity: 0 },
+  ];
+  
+  const pendingOrders = [
+    { id: 'PO-001', supplier: 'TechGear Inc.', status: 'Pending' },
+    { id: 'PO-002', supplier: 'Fashion Hub', status: 'Shipped' },
+  ];
 
   return (
     <div className="grid gap-6">
@@ -90,108 +40,101 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Inventory
+              Today's Sales
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalItems.toLocaleString()}</div>
+            <div className="text-2xl font-bold">$1,482.50</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              +12% from yesterday
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Inventory Value
+                Low Stock Alerts
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${totalValue.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +15.2% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{lowStockItems.length}</div>
             <p className="text-xs text-muted-foreground">
-              {outOfStockItems.length} item(s) out of stock
+              Items needing attention
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingOrders.filter(p => p.status === 'Pending').length}</div>
+            <p className="text-xs text-muted-foreground">
+              {pendingOrders.length} total purchase orders
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Sales Trend</CardTitle>
+            <CardTitle>Low Stock Items</CardTitle>
             <CardDescription>
-              Showing sales volume for the last 6 months.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px] w-full">
-              <BarChart accessibilityLayer data={chartData}>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                  tickFormatter={(value) => value.slice(0, 3)}
-                />
-                 <YAxis />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent />}
-                />
-                <Bar dataKey="value" fill="var(--color-value)" radius={8} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Recently Added Items</CardTitle>
-            <CardDescription>
-              The latest items added to your inventory.
+              These items are running low and may need to be reordered.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentlyAddedItems.map((item: InventoryItem) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Link href={`/inventory/${item.id}`} className="font-medium hover:underline">
-                        {item.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {lowStockItems.map(item => (
+                        <TableRow key={item.name}>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="text-right">
+                                <Badge variant={item.quantity === 0 ? "destructive" : "outline"} className={item.quantity > 0 ? "bg-yellow-100 text-yellow-800" : ""}>{item.quantity}</Badge>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Purchase Orders</CardTitle>
+            <CardDescription>
+              Track the status of your incoming inventory.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+          <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Supplier</TableHead>
+                        <TableHead className="text-right">Status</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {pendingOrders.map(order => (
+                        <TableRow key={order.id}>
+                            <TableCell className="font-medium">{order.id}</TableCell>
+                            <TableCell>{order.supplier}</TableCell>
+                            <TableCell className="text-right">
+                                <Badge variant={order.status === 'Pending' ? 'secondary' : 'default'}>{order.status}</Badge>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
             </Table>
           </CardContent>
         </Card>

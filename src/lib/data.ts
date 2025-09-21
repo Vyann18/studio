@@ -3,24 +3,17 @@ import type { InventoryItem, User } from './types';
 export const users: User[] = [
   {
     id: 'user-1',
-    name: 'Alex Johnson',
-    email: 'alex.j@example.com',
+    name: 'Admin User',
+    email: 'admin@example.com',
     role: 'admin',
-    avatar: 'https://i.pravatar.cc/150?u=alexj',
+    avatar: 'https://i.pravatar.cc/150?u=admin',
   },
   {
     id: 'user-2',
-    name: 'Maria Garcia',
-    email: 'maria.g@example.com',
-    role: 'manager',
-    avatar: 'https://i.pravatar.cc/150?u=mariag',
-  },
-  {
-    id: 'user-3',
-    name: 'Sam Lee',
-    email: 'sam.l@example.com',
-    role: 'employee',
-    avatar: 'https://i.pravatar.cc/150?u=saml',
+    name: 'Regular User',
+    email: 'user@example.com',
+    role: 'user',
+    avatar: 'https://i.pravatar.cc/150?u=user',
   },
 ];
 
