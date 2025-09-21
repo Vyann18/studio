@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Users } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,14 +33,15 @@ const initialSales = [
     { id: 'INV-003', customer: 'Charlie Brown', date: '2024-05-26', status: 'Paid', total: 90.00 },
 ];
 
+// This would typically come from a context or API
 const initialCustomers = [
     { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com' },
     { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com' },
-]
+];
 
 export default function SalesPage() {
     const [sales, setSales] = React.useState(initialSales);
-    const [customers, setCustomers] = React.useState(initialCustomers);
+    const [customers] = React.useState(initialCustomers);
     const { toast } = useToast();
 
     const AddSaleDialog = () => {
@@ -62,7 +63,7 @@ export default function SalesPage() {
             total: parseFloat(total),
           };
     
-          setSales(prev => [...prev, newSale]);
+          setSales(prev => [newSale, ...prev]);
           toast({ title: 'Success', description: 'Sale added successfully.'});
           setOpen(false);
         }
@@ -105,134 +106,51 @@ export default function SalesPage() {
         )
       }
 
-    const AddCustomerDialog = () => {
-        const [open, setOpen] = React.useState(false);
-        const [name, setName] = React.useState('');
-        const [email, setEmail] = React.useState('');
-    
-        const handleAdd = () => {
-          if(!name || !email) {
-            toast({ title: 'Error', description: 'Please fill all fields.', variant: 'destructive'});
-            return;
-          }
-          
-          const newCustomer = {
-            id: `CUS-0${customers.length + 1}`,
-            name,
-            email,
-          };
-    
-          setCustomers(prev => [...prev, newCustomer]);
-          toast({ title: 'Success', description: 'Customer added successfully.'});
-          setOpen(false);
-        }
-    
-        return (
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Customer
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Customer</DialogTitle>
-                        <DialogDescription>Enter the details of the new customer.</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">Name</Label>
-                            <Input id="name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">Email</Label>
-                            <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="col-span-3" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleAdd}>Add Customer</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        )
-      }
-
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Sales</h1>
           <p className="text-muted-foreground">
-            Create new sales, view history, and manage customers.
+            Create new sales and view sales history.
           </p>
         </div>
         <AddSaleDialog />
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Sales History</CardTitle>
-                    <CardDescription>View all your past sales transactions.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Invoice ID</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Payment Status</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sales.map((sale) => (
-                            <TableRow key={sale.id}>
-                                <TableCell className="font-medium">{sale.id}</TableCell>
-                                <TableCell>{sale.customer}</TableCell>
-                                <TableCell>{sale.date}</TableCell>
-                                <TableCell>
-                                <Badge variant={sale.status === 'Paid' ? 'secondary' : 'destructive'}>{sale.status}</Badge>
-                                </TableCell>
-                                <TableCell className="text-right">${sale.total.toFixed(2)}</TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-        <div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Customers</CardTitle>
-                    <CardDescription>Manage your customer information.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex justify-end mb-4">
-                        <AddCustomerDialog />
-                    </div>
-                    <div className="space-y-4">
-                       {customers.map(c => (
-                         <div key={c.id} className="flex items-center justify-between p-2 rounded-md border">
-                            <div>
-                                <p className="font-medium">{c.name}</p>
-                                <p className="text-sm text-muted-foreground">{c.email}</p>
-                            </div>
-                            <Button variant="ghost" size="icon"><Users className="h-4 w-4"/></Button>
-                        </div>
-                       ))}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-      </div>
+      <Card>
+          <CardHeader>
+              <CardTitle>Sales History</CardTitle>
+              <CardDescription>View all your past sales transactions.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="rounded-md border">
+                  <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Invoice ID</TableHead>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Payment Status</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {sales.map((sale) => (
+                      <TableRow key={sale.id}>
+                          <TableCell className="font-medium">{sale.id}</TableCell>
+                          <TableCell>{sale.customer}</TableCell>
+                          <TableCell>{sale.date}</TableCell>
+                          <TableCell>
+                          <Badge variant={sale.status === 'Paid' ? 'secondary' : 'destructive'}>{sale.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">${sale.total.toFixed(2)}</TableCell>
+                      </TableRow>
+                      ))}
+                  </TableBody>
+                  </Table>
+              </div>
+          </CardContent>
+      </Card>
     </div>
   );
 }

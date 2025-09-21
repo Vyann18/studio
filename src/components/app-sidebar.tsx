@@ -17,6 +17,8 @@ import {
   Users,
   Package,
   Settings,
+  Building,
+  Truck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,6 +29,8 @@ const allMenuItems = [
     { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'user', 'employee'] },
     { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee', 'user'] },
     { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user', 'employee'] },
+    { href: '/customers', label: 'Customers', icon: Users, roles: ['admin', 'manager', 'user', 'employee'] },
+    { href: '/suppliers', label: 'Suppliers', icon: Truck, roles: ['admin', 'manager', 'user', 'employee'] },
     { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
     { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
     { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
