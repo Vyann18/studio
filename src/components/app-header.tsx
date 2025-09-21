@@ -17,14 +17,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useSidebar } from '@/components/ui/sidebar';
-import { Search, UserCheck, Users, PanelLeft } from 'lucide-react';
+import { Search, UserCheck, Users, PanelLeft, LogOut } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { User } from '@/lib/types';
 import { AppSidebar } from './app-sidebar';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function AppHeader() {
   const { currentUser, setCurrentUser, users } = useUser();
   const { toggleSidebar } = useSidebar();
+  const router = useRouter();
 
 
   const getInitials = (name: string) => {
@@ -34,11 +37,15 @@ export function AppHeader() {
       .join('');
   };
   
+  const handleLogout = () => {
+    router.push('/login');
+  };
+  
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
        <Sheet>
         <SheetTrigger asChild>
-          <Button size="icon" variant="outline" className="sm:hidden" onClick={toggleSidebar}>
+          <Button size="icon" variant="outline" className="sm:hidden">
             <PanelLeft className="h-5 w-5" />
             <span className="sr-only">Toggle Menu</span>
           </Button>
@@ -47,6 +54,10 @@ export function AppHeader() {
           <AppSidebar />
         </SheetContent>
       </Sheet>
+      <Button size="icon" variant="outline" className="hidden sm:inline-flex" onClick={toggleSidebar}>
+        <PanelLeft className="h-5 w-5" />
+        <span className="sr-only">Toggle Menu</span>
+      </Button>
       <div className="relative ml-auto flex-1 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
@@ -86,6 +97,11 @@ export function AppHeader() {
               </div>
             </DropdownMenuItem>
           ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
