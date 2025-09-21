@@ -56,7 +56,7 @@ export function CompanyIdGate() {
               <Input
                 id="company-id"
                 type="text"
-                placeholder="e.g., EJY1UT"
+                placeholder="Insert your Company ID here"
                 required
                 value={companyId}
                 onChange={(e) => setCompanyId(e.target.value)}
@@ -78,5 +78,3 @@ export function CompanyIdGate() {
     </div>
   );
 }
-
-    
