@@ -86,19 +86,23 @@ export function AppHeader() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>Switch Role</span>
-          </DropdownMenuLabel>
-          {users.map((user: User) => (
-            <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user)} className="cursor-pointer">
-              <div className="flex w-full items-center justify-between">
-                <span>{user.name} ({user.role})</span>
-                {currentUser.id === user.id && <UserCheck className="h-4 w-4 text-primary" />}
-              </div>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
+          {currentUser.role === 'admin' && (
+            <>
+              <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>Switch Role</span>
+              </DropdownMenuLabel>
+              {users.map((user: User) => (
+                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user)} className="cursor-pointer">
+                  <div className="flex w-full items-center justify-between">
+                    <span>{user.name} ({user.role})</span>
+                    {currentUser.id === user.id && <UserCheck className="h-4 w-4 text-primary" />}
+                  </div>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
