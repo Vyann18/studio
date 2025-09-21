@@ -1,3 +1,5 @@
+'use client';
+
 import { notFound } from 'next/navigation';
 import { inventoryItems } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -152,10 +154,4 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
       </div>
     </div>
   );
-}
-
-export function generateStaticParams() {
-  return inventoryItems.map((item) => ({
-    id: item.id,
-  }));
 }

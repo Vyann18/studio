@@ -13,7 +13,7 @@ export type InventoryItem = {
   history: { date: string; quantity: number }[];
 };
 
-export type Role = 'admin' | 'user';
+export type Role = 'admin' | 'manager' | 'employee';
 
 export type User = {
   id: string;

@@ -17,22 +17,21 @@ import {
   Users,
   Building,
   Package,
+  Settings,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 
 const allMenuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'user'] },
-  { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'user'] },
-  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'user'] },
-  { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'user'] },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
+  { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'employee'] },
+  { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee'] },
+  { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager'] },
   { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
+  { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
+  { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
 ];
-
-const settingsMenuItems = [
-    { href: '/settings', label: 'Settings', icon: Building, roles: ['admin'] },
-]
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -72,7 +71,7 @@ export function AppSidebar() {
              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{children: "Settings"}} isActive={pathname.startsWith('/settings')}>
                     <Link href="/settings">
-                        <Building />
+                        <Settings />
                         <span>Settings</span>
                     </Link>
                 </SidebarMenuButton>

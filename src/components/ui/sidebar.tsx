@@ -3,14 +3,14 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, X } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetOverlay } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -195,6 +195,7 @@ const Sidebar = React.forwardRef<
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+           <SheetOverlay className="bg-black/60" />
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
@@ -206,6 +207,10 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
+             <button onClick={() => setOpenMobile(false)} className="absolute top-3 right-3 p-1 rounded-full text-muted-foreground hover:bg-muted">
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close sidebar</span>
+            </button>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>

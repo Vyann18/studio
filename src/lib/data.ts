@@ -10,10 +10,17 @@ export const users: User[] = [
   },
   {
     id: 'user-2',
-    name: 'Regular User',
-    email: 'user@example.com',
-    role: 'user',
-    avatar: 'https://i.pravatar.cc/150?u=user',
+    name: 'Manager User',
+    email: 'manager@example.com',
+    role: 'manager',
+    avatar: 'https://i.pravatar.cc/150?u=manager',
+  },
+  {
+    id: 'user-3',
+    name: 'Employee User',
+    email: 'employee@example.com',
+    role: 'employee',
+    avatar: 'https://i.pravatar.cc/150?u=employee',
   },
 ];
 
