@@ -1,3 +1,4 @@
+
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { User, Company } from '@/lib/types';
@@ -13,6 +14,7 @@ type UserContextType = {
   login: (email: string, password: string) => User | null;
   logout: () => void;
   addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>) => User | null;
+  addCompany: (company: Company) => void;
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
   removeUser: (userId: string) => void;
   setUsers: (users: User[]) => void;
@@ -74,6 +76,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return newUser;
   };
 
+  const addCompany = (company: Company) => {
+    setCompanies([...companies, company]);
+  };
+
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
     const userIndex = users.findIndex(u => u.id === userId && u.password === oldPass);
     if (userIndex === -1) {
@@ -128,6 +134,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         addUser,
+        addCompany,
         updateUserPassword,
         removeUser,
         setUsers: handleSetUsers
@@ -144,5 +151,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    

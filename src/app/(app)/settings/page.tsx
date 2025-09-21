@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -41,7 +42,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-  } from "@/components/ui/alert-dialog"
+  } from "@/components/ui/alert-dialog";
+import { AddCompanyDialog } from '@/components/add-company-dialog';
+
 
 const roles: Role[] = ['admin', 'manager', 'employee', 'user'];
 
@@ -251,10 +254,7 @@ export default function SettingsPage() {
                         <p className="font-medium">Add New Company</p>
                         <p className="text-sm text-muted-foreground">Generate a new unique ID for another company.</p>
                     </div>
-                    <Button variant="outline">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Company
-                    </Button>
+                    <AddCompanyDialog />
                 </div>
             </CardContent>
         </Card>
@@ -262,5 +262,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
