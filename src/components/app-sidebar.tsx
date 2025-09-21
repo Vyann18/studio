@@ -8,6 +8,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  useSidebar,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -18,10 +20,12 @@ import {
   Building,
   Package,
   Settings,
+  ChevronLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
+import { Button } from './ui/button';
 
 const allMenuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
@@ -36,16 +40,20 @@ const allMenuItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { currentUser } = useUser();
+  const { state, toggleSidebar } = useSidebar();
 
   const menuItems = allMenuItems.filter(item => item.roles.includes(currentUser.role));
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Package className="h-6 w-6 text-primary" />
-          <h1 className="text-lg font-semibold">MiniERP</h1>
-        </Link>
+        <div className="flex items-center gap-2">
+            <Package className="h-6 w-6 text-primary" />
+            <h1 className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</h1>
+        </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8 data-[state=expanded]:rotate-180" onClick={toggleSidebar}>
+            <ChevronLeft />
+        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

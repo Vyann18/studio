@@ -16,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useSidebar } from '@/components/ui/sidebar';
 import { Search, UserCheck, Users, PanelLeft, LogOut } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import type { User } from '@/lib/types';
@@ -26,7 +25,6 @@ import Link from 'next/link';
 
 export function AppHeader() {
   const { currentUser, setCurrentUser, users } = useUser();
-  const { toggleSidebar } = useSidebar();
   const router = useRouter();
 
 
@@ -54,10 +52,6 @@ export function AppHeader() {
           <AppSidebar />
         </SheetContent>
       </Sheet>
-      <Button size="icon" variant="outline" className="hidden sm:inline-flex" onClick={toggleSidebar}>
-        <PanelLeft className="h-5 w-5" />
-        <span className="sr-only">Toggle Menu</span>
-      </Button>
       <div className="relative ml-auto flex-1 md:grow-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
