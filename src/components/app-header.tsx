@@ -16,18 +16,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Search, UserCheck, Users, PanelLeft, LogOut } from 'lucide-react';
+import { Search, User, PanelLeft, LogOut, Settings } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
-import type { User } from '@/lib/types';
 import { AppSidebar } from './app-sidebar';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useSidebar } from '@/components/ui/sidebar';
 
 export function AppHeader() {
-  const { currentUser, setCurrentUser, users, logout } = useUser();
+  const { currentUser, logout } = useUser();
   const router = useRouter();
-  const { toggleSidebar } = useSidebar();
 
 
   const getInitials = (name: string) => {
@@ -43,7 +40,7 @@ export function AppHeader() {
   };
   
   if (!currentUser) {
-    return null; // Or a loading spinner
+    return null;
   }
 
   return (
@@ -85,25 +82,21 @@ export function AppHeader() {
               </p>
             </div>
           </DropdownMenuLabel>
+           <DropdownMenuLabel>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <User className="h-4 w-4" />
+                <span className="capitalize">{currentUser.role}</span>
+            </div>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {currentUser.role === 'admin' && (
-            <>
-              <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>Switch Role</span>
-              </DropdownMenuLabel>
-              {users.map((user: User) => (
-                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user)} className="cursor-pointer">
-                  <div className="flex w-full items-center justify-between">
-                    <span>{user.name} ({user.role})</span>
-                    {currentUser.id === user.id && <UserCheck className="h-4 w-4 text-primary" />}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
           </DropdownMenuItem>

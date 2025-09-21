@@ -16,7 +16,6 @@ import {
   ShoppingCart,
   Receipt,
   Users,
-  Building,
   Package,
   Settings,
   ChevronLeft,
@@ -55,7 +54,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold data-[state=collapsed]:hidden">MiniERP</span>
+            <span className="text-lg font-semibold data-[state=collapsed]:hidden">InventoryFlow</span>
         </div>
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleSidebar}>
             {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
@@ -83,6 +82,15 @@ export function AppSidebar() {
         <SidebarMenu>
           {currentUser.role === 'admin' && (
              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{children: "User Management"}} isActive={pathname.startsWith('/settings')}>
+                    <Link href="/settings">
+                        <Users />
+                        <span>User Management</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+           <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{children: "Settings"}} isActive={pathname.startsWith('/settings')}>
                     <Link href="/settings">
                         <Settings />
@@ -90,7 +98,6 @@ export function AppSidebar() {
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-          )}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

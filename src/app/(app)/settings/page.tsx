@@ -38,21 +38,6 @@ export default function SettingsPage() {
   const { currentUser, users, setUsers } = useUser();
   const { toast } = useToast();
 
-  if (!currentUser || currentUser.role !== 'admin') {
-    return (
-        <div className="flex items-center justify-center h-full">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle className="text-destructive">Access Denied</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p>You do not have permission to view this page. Please contact an administrator.</p>
-                </CardContent>
-            </Card>
-        </div>
-    )
-  }
-
   const handleRoleChange = (userId: string, newRole: Role) => {
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     toast({
@@ -67,6 +52,10 @@ export default function SettingsPage() {
       .map((n) => n[0])
       .join('');
   };
+  
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -77,65 +66,67 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Shield /> User Management</CardTitle>
-          <CardDescription>
-            Add new users and assign their roles in the system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-        <div className="flex justify-end mb-4">
-            <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add User
-            </Button>
-        </div>
-        <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="w-[180px]">Role</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Select 
-                        defaultValue={user.role} 
-                        onValueChange={(newRole: Role) => handleRoleChange(user.id, newRole)}
-                        disabled={user.id === currentUser.id && currentUser.role === 'admin'}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.map(role => (
-                            <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      {currentUser.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Shield /> User Management</CardTitle>
+            <CardDescription>
+              Add new users and assign their roles in the system.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+          <div className="flex justify-end mb-4">
+              <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add User
+              </Button>
           </div>
-        </CardContent>
-      </Card>
+          <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="w-[180px]">Role</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{user.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Select 
+                          defaultValue={user.role} 
+                          onValueChange={(newRole: Role) => handleRoleChange(user.id, newRole)}
+                          disabled={user.id === currentUser.id && currentUser.role === 'admin'}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roles.map(role => (
+                              <SelectItem key={role} value={role} className="capitalize">{role}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
           <CardHeader>
