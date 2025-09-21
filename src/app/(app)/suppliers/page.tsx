@@ -32,19 +32,37 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
 
+type Supplier = {
+    id: string;
+    name: string;
+    contact: string;
+    category: string;
+};
 
-const initialSuppliers = [
+const initialSuppliers: Supplier[] = [
     { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics' },
     { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com', category: 'Apparel' },
 ];
 
 export default function SuppliersPage() {
     const { currentUser } = useUser();
-    const [suppliers, setSuppliers] = React.useState(initialSuppliers);
+    const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliers);
+    const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
 
     const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
     
+    const handleEditClick = (supplier: Supplier) => {
+        setSelectedSupplier(supplier);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleDelete = (supplierId: string) => {
+        setSuppliers(prev => prev.filter(s => s.id !== supplierId));
+        toast({ title: 'Success', description: 'Supplier deleted successfully.'});
+    };
+
     const AddSupplierDialog = () => {
         const [open, setOpen] = React.useState(false);
         const [name, setName] = React.useState('');
@@ -57,7 +75,7 @@ export default function SuppliersPage() {
             return;
           }
           
-          const newSupplier = {
+          const newSupplier: Supplier = {
             id: `SUP-0${suppliers.length + 1}`,
             name,
             contact,
@@ -101,6 +119,59 @@ export default function SuppliersPage() {
                     </div>
                     <DialogFooter>
                         <Button onClick={handleAdd}>Add Supplier</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+    }
+
+    const EditSupplierDialog = () => {
+        const [name, setName] = React.useState(selectedSupplier?.name || '');
+        const [contact, setContact] = React.useState(selectedSupplier?.contact || '');
+        const [category, setCategory] = React.useState(selectedSupplier?.category || '');
+
+        React.useEffect(() => {
+            if(selectedSupplier) {
+                setName(selectedSupplier.name);
+                setContact(selectedSupplier.contact);
+                setCategory(selectedSupplier.category);
+            }
+        }, [selectedSupplier]);
+
+        const handleSave = () => {
+            if(!selectedSupplier || !name || !contact || !category) return;
+
+            setSuppliers(prev => prev.map(s => 
+                s.id === selectedSupplier.id ? { ...s, name, contact, category } : s
+            ));
+            toast({ title: 'Success', description: 'Supplier updated successfully.'});
+            setIsEditDialogOpen(false);
+            setSelectedSupplier(null);
+        };
+
+        return (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Supplier</DialogTitle>
+                        <DialogDescription>Update the details of the supplier.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-name" className="text-right">Name</Label>
+                            <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-contact" className="text-right">Contact</Label>
+                            <Input id="edit-contact" type="email" value={contact} onChange={e => setContact(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-category" className="text-right">Category</Label>
+                            <Input id="edit-category" value={category} onChange={e => setCategory(e.target.value)} className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSave}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -150,8 +221,8 @@ export default function SuppliersPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleEditClick(supplier)}>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(supplier.id)}>Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
@@ -163,6 +234,7 @@ export default function SuppliersPage() {
                 </div>
             </CardContent>
         </Card>
+        {canManage && <EditSupplierDialog />}
     </div>
   );
 }

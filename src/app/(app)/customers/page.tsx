@@ -32,17 +32,36 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
 
-const initialCustomers = [
+type Customer = {
+    id: string;
+    name: string;
+    email: string;
+    totalSpent: number;
+}
+
+const initialCustomers: Customer[] = [
     { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50 },
     { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com', totalSpent: 850.00 },
 ];
 
 export default function CustomersPage() {
     const { currentUser } = useUser();
-    const [customers, setCustomers] = React.useState(initialCustomers);
+    const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
+    const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
 
     const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+
+    const handleEditClick = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setIsEditDialogOpen(true);
+    };
+
+    const handleDelete = (customerId: string) => {
+        setCustomers(prev => prev.filter(c => c.id !== customerId));
+        toast({ title: 'Success', description: 'Customer deleted successfully.'});
+    };
 
     const AddCustomerDialog = () => {
         const [open, setOpen] = React.useState(false);
@@ -100,6 +119,53 @@ export default function CustomersPage() {
         )
       }
 
+      const EditCustomerDialog = () => {
+        const [name, setName] = React.useState(selectedCustomer?.name || '');
+        const [email, setEmail] = React.useState(selectedCustomer?.email || '');
+
+        React.useEffect(() => {
+            if(selectedCustomer) {
+                setName(selectedCustomer.name);
+                setEmail(selectedCustomer.email);
+            }
+        }, [selectedCustomer]);
+
+        const handleSave = () => {
+            if(!selectedCustomer || !name || !email) return;
+
+            setCustomers(prev => prev.map(c => 
+                c.id === selectedCustomer.id ? { ...c, name, email } : c
+            ));
+            toast({ title: 'Success', description: 'Customer updated successfully.'});
+            setIsEditDialogOpen(false);
+            setSelectedCustomer(null);
+        };
+
+        return (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Customer</DialogTitle>
+                        <DialogDescription>Update the details of the customer.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-name" className="text-right">Name</Label>
+                            <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-email" className="text-right">Email</Label>
+                            <Input id="edit-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSave}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )
+      }
+
 
   return (
     <div className="space-y-6">
@@ -143,8 +209,8 @@ export default function CustomersPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleEditClick(customer)}>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(customer.id)}>Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
@@ -156,6 +222,7 @@ export default function CustomersPage() {
                 </div>
             </CardContent>
         </Card>
+        {canManage && <EditCustomerDialog />}
     </div>
   );
 }
