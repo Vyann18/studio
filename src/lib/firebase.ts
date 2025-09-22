@@ -1,6 +1,7 @@
+
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -14,8 +15,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+let auth: Auth;
+let googleProvider: GoogleAuthProvider;
 
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Conditionally initialize Firebase only if all config values are present.
+// This prevents build errors in environments where env vars might be missing.
+if (
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId
+) {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+} else {
+  console.warn("Firebase config is incomplete. Firebase features will be disabled.");
+  // Provide dummy objects to prevent app from crashing when auth is used
+  app = {} as FirebaseApp;
+  auth = {} as Auth;
+  googleProvider = {} as GoogleAuthProvider;
+}
+
+export { app, auth, googleProvider };
