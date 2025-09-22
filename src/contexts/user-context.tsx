@@ -4,11 +4,10 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { 
   onAuthStateChanged, 
   signOut,
-  signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
@@ -20,7 +19,6 @@ type UserContextType = {
   users: User[];
   companies: Company[];
   login: (email: string, password: string) => Promise<User | null>;
-  signInWithGoogle: () => void;
   logout: () => void;
   addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }) => Promise<User | null>;
   addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
@@ -39,17 +37,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!auth) {
-        setCurrentUser(null);
+        setCurrentUser(null); // Firebase not configured, treat as logged out
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
+            // User is signed in, see if they exist in our app's user list
             const existingUser = users.find(u => u.email === firebaseUser.email);
             if (existingUser) {
                 setCurrentUser(existingUser);
                 localStorage.setItem('currentUser', JSON.stringify(existingUser));
             } else {
-                // New user signed in (e.g., via Google for the first time)
+                // New user signed up (e.g., via Google or email for the first time)
                 const tempCompanyId = "EJY1UT"; // Default company for new users
                 const newUser: User = {
                     id: firebaseUser.uid,
@@ -59,7 +58,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
                     companyId: tempCompanyId,
                 };
+                
+                // Use functional update to ensure we have the latest state
                 setUsers(prevUsers => {
+                  const userExists = prevUsers.some(u => u.email === newUser.email);
+                  if (userExists) {
+                    return prevUsers; // Do nothing if user already added
+                  }
                   const updatedUsers = [...prevUsers, newUser];
                   setCurrentUser(newUser);
                   localStorage.setItem('currentUser', JSON.stringify(newUser));
@@ -67,23 +72,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 });
             }
         } else {
+            // User is signed out
             setCurrentUser(null);
             localStorage.removeItem('currentUser');
         }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, []); // removed `users` dependency to prevent re-running on every user list change
 
 
   const login = async (email: string, password: string): Promise<User | null> => {
-    if (!auth) return null;
-    
-    return new Promise(async (resolve, reject) => {
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // onAuthStateChanged will handle setting the current user.
-        // We need to wait for currentUser to be updated.
+    if (!auth) {
+        console.error("Firebase auth is not initialized.");
+        return null;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle setting the current user.
+      // We return a promise that resolves when the user is set.
+      return new Promise((resolve) => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
           if (firebaseUser) {
             const appUser = users.find(u => u.email === firebaseUser.email);
@@ -93,20 +101,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         });
-      } catch (error) {
-        console.error("Login Error:", error);
-        reject(error);
-      }
-    });
-  };
-
-  const signInWithGoogle = async () => {
-    if (!auth || !googleProvider) return;
-    try {
-        await signInWithPopup(auth, googleProvider);
-        // onAuthStateChanged will handle the rest
+      });
     } catch (error) {
-        console.error("Google Sign-In Error:", error);
+      console.error("Login Error:", error);
+      return null;
     }
   };
 
@@ -123,28 +121,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!auth || !userData.password) return null;
     
     if (users.some(u => u.email === userData.email)) {
-        return null; // User already exists
+        return null; // User already exists in local state, Firebase will also throw an error.
     }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-      const firebaseUser = userCredential.user;
-
-      const tempCompanyId = "EJY1UT"; 
-
-      const newUser: User = {
-          id: firebaseUser.uid,
-          name: userData.name,
-          email: userData.email,
-          companyId: tempCompanyId,
-          role: 'user', 
-          avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-      };
-      
-      setUsers(prev => [...prev, newUser]);
-      // onAuthStateChanged will handle setting the current user after signup
-      return newUser;
-
+      // onAuthStateChanged will now handle creating the user in our local state.
+      return { id: userCredential.user.uid, ...userData, role: 'user', avatar: '', companyId: '' }; // Return a temporary user object
     } catch(error) {
       console.error("Signup error:", error);
       return null;
@@ -196,7 +179,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         companyIdVerified,
         verifyCompanyId,
         login,
-        signInWithGoogle,
         logout,
         addUser,
         addCompany,

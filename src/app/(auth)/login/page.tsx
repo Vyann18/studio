@@ -20,7 +20,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login, signInWithGoogle } = useUser();
+    const { login } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -51,20 +51,6 @@ export default function LoginPage() {
             });
         }
     }
-    
-    const handleGoogleLogin = async () => {
-        try {
-            await signInWithGoogle();
-            // onAuthStateChanged will handle navigation and toasts
-            router.push('/dashboard');
-        } catch (error) {
-            toast({
-                title: "Google Sign-In Failed",
-                description: "Could not sign in with Google. Please try again.",
-                variant: "destructive",
-            });
-        }
-    };
 
 
   return (
@@ -115,9 +101,6 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full">
                 Login
-            </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
-                Login with Google
             </Button>
             </div>
         </form>

@@ -42,7 +42,7 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const router = useRouter();
-  const { addUser, signInWithGoogle } = useUser();
+  const { addUser } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -78,21 +78,6 @@ export default function SignupPage() {
         });
     }
   }
-
-  const handleGoogleSignup = async () => {
-    try {
-        await signInWithGoogle();
-        // onAuthStateChanged will handle navigation and toasts
-        router.push('/dashboard');
-    } catch (error) {
-        toast({
-            title: "Google Sign-Up Failed",
-            description: "Could not sign up with Google. Please try again.",
-            variant: "destructive",
-        });
-    }
-  };
-
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -170,9 +155,6 @@ export default function SignupPage() {
             />
             <Button type="submit" className="w-full">
                 Create an account
-            </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignup}>
-                Sign up with Google
             </Button>
             </form>
         </Form>

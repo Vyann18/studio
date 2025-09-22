@@ -2,7 +2,7 @@
 'use client';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,7 +17,6 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 let auth: ReturnType<typeof getAuth> | null = null;
-let googleProvider: GoogleAuthProvider | null = null;
 
 if (typeof window !== 'undefined') {
     if (
@@ -26,11 +25,10 @@ if (typeof window !== 'undefined') {
         firebaseConfig.projectId
     ) {
         auth = getAuth(app);
-        googleProvider = new GoogleAuthProvider();
     } else {
         console.warn("Firebase config is missing. Firebase features will be disabled.");
     }
 }
 
 
-export { auth, googleProvider };
+export { auth };
