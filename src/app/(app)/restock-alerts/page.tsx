@@ -8,12 +8,12 @@ import type { RestockAlertsOutput } from '@/ai/flows/restock-alerts';
 import { AlertCircle, Bell, Bot, Calendar, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useUser } from '@/contexts/user-context';
-import { useInventory } from '@/contexts/inventory-context';
+import { useData } from '@/contexts/data-context';
 
 
 export default function RestockAlertsPage() {
   const { currentUser } = useUser();
-  const { inventory } = useInventory();
+  const { inventory } = useData();
   const [alerts, setAlerts] = useState<RestockAlertsOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -33,32 +33,14 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@/contexts/user-context';
-
-type Sale = {
-    id: string;
-    customer: string;
-    date: string;
-    status: 'Paid' | 'Pending';
-    total: number;
-}
-
-const initialSales: Sale[] = [
-    { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90 },
-    { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90 },
-    { id: 'INV-003', customer: 'Charlie Brown', date: '2024-05-26', status: 'Paid', total: 90.00 },
-];
-
-const initialCustomers = [
-    { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com' },
-    { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com' },
-];
+import { useData } from '@/contexts/data-context';
+import type { Sale } from '@/lib/types';
 
 const statuses: Sale['status'][] = ['Paid', 'Pending'];
 
 export default function SalesPage() {
     const { currentUser } = useUser();
-    const [sales, setSales] = React.useState(initialSales);
-    const [customers] = React.useState(initialCustomers);
+    const { sales, customers, addSale, updateSaleStatus } = useData();
     const [selectedSale, setSelectedSale] = React.useState<Sale | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
@@ -72,24 +54,21 @@ export default function SalesPage() {
 
     const AddSaleDialog = () => {
         const [open, setOpen] = React.useState(false);
-        const [customer, setCustomer] = React.useState('');
+        const [customerName, setCustomerName] = React.useState('');
         const [total, setTotal] = React.useState('');
     
         const handleAdd = () => {
-          if(!customer || !total) {
+          if(!customerName || !total) {
             toast({ title: 'Error', description: 'Please fill all fields.', variant: 'destructive'});
             return;
           }
           
-          const newSale = {
-            id: `INV-00${sales.length + 1}`,
-            customer,
-            date: new Date().toISOString().split('T')[0],
-            status: 'Pending' as 'Pending',
+          addSale({
+            customer: customerName,
+            status: 'Pending',
             total: parseFloat(total),
-          };
+          });
     
-          setSales(prev => [newSale, ...prev]);
           toast({ title: 'Success', description: 'Sale added successfully.'});
           setOpen(false);
         }
@@ -110,7 +89,7 @@ export default function SalesPage() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="customer" className="text-right">Customer</Label>
-                            <Select onValueChange={setCustomer} value={customer}>
+                            <Select onValueChange={setCustomerName} value={customerName}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a customer" />
                                 </SelectTrigger>
@@ -144,9 +123,7 @@ export default function SalesPage() {
         const handleSave = () => {
             if(!selectedSale) return;
 
-            setSales(prev => prev.map(s => 
-                s.id === selectedSale.id ? { ...s, status } : s
-            ));
+            updateSaleStatus(selectedSale.id, status);
             toast({ title: 'Success', description: 'Sale status updated successfully.'});
             setIsEditDialogOpen(false);
             setSelectedSale(null);

@@ -1,4 +1,4 @@
-import type { InventoryItem, User, Category } from './types';
+import type { InventoryItem, User, Category, Sale, PurchaseOrder, Customer, Supplier, Transaction } from './types';
 
 export const users: User[] = [
   {
@@ -31,7 +31,9 @@ export const users: User[] = [
 ];
 
 export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];
-export const suppliers: string[] = ['TechGear Inc.', 'Fashion Hub', 'Global Foods', 'PrintWorks', 'HomeEssence', 'SoundMax', 'ActiveLife'];
+
+// This is now just for populating the dropdowns, not the actual supplier list
+export const supplierNames: string[] = ['TechGear Inc.', 'Fashion Hub', 'Global Foods', 'PrintWorks', 'HomeEssence', 'SoundMax', 'ActiveLife'];
 
 
 export const inventoryItems: InventoryItem[] = [
@@ -86,72 +88,29 @@ export const inventoryItems: InventoryItem[] = [
       { date: '2024-05-18', quantity: 75 },
     ],
   },
-  {
-    id: 'item-4',
-    name: 'The Great Gatsby',
-    sku: 'BK-TGG-01',
-    quantity: 120,
-    category: 'Books',
-    supplier: 'PrintWorks',
-    cost: 5,
-    price: 15.0,
-    lastUpdated: '2024-05-15T11:45:00Z',
-    history: [
-      { date: '2024-04-01', quantity: 150 },
-      { date: '2024-04-15', quantity: 140 },
-      { date: '2024-05-01', quantity: 130 },
-      { date: '2024-05-15', quantity: 120 },
-    ],
-  },
-  {
-    id: 'item-5',
-    name: 'Scented Candle',
-    sku: 'HM-SC-LAV',
-    quantity: 200,
-    category: 'Home Goods',
-    supplier: 'HomeEssence',
-    cost: 7.5,
-    price: 18.0,
-    lastUpdated: '2024-05-21T16:00:00Z',
-    history: [
-      { date: '2024-04-01', quantity: 250 },
-      { date: '2024-04-15', quantity: 230 },
-      { date: '2024-05-01', quantity: 210 },
-      { date: '2024-05-21', quantity: 200 },
-    ],
-  },
-  {
-    id: 'item-6',
-    name: 'Bluetooth Speaker',
-    sku: 'BS-2024',
-    quantity: 0,
-    category: 'Electronics',
-    supplier: 'SoundMax',
-    cost: 45,
-    price: 99.99,
-    lastUpdated: '2024-05-19T18:00:00Z',
-    history: [
-      { date: '2024-04-01', quantity: 50 },
-      { date: '2024-04-15', quantity: 30 },
-      { date: '2024-05-01', quantity: 10 },
-      { date: '2024-05-19', quantity: 0 },
-    ],
-  },
-  {
-    id: 'item-7',
-    name: 'Yoga Mat',
-    sku: 'HM-YM-01',
-    quantity: 90,
-    category: 'Home Goods',
-    supplier: 'ActiveLife',
-    cost: 15,
-    price: 35.0,
-    lastUpdated: '2024-05-23T12:00:00Z',
-    history: [
-        { date: '2024-04-01', quantity: 120 },
-        { date: '2024-04-15', quantity: 110 },
-        { date: '2024-05-01', quantity: 100 },
-        { date: '2024-05-23', quantity: 90 },
-    ]
-  },
+];
+
+export const sales: Sale[] = [
+    { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90 },
+    { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90 },
+];
+
+export const purchaseOrders: PurchaseOrder[] = [
+    { id: 'PO-001', supplier: 'TechGear Inc.', date: '2024-05-28', status: 'Delivered', total: 1250.00 },
+    { id: 'PO-002', supplier: 'Fashion Hub', date: '2024-05-27', status: 'Shipped', total: 800.00 },
+];
+
+export const customers: Customer[] = [
+    { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50 },
+    { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com', totalSpent: 850.00 },
+];
+
+export const suppliers: Supplier[] = [
+    { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics' },
+    { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com', category: 'Apparel' },
+];
+
+export const transactions: Transaction[] = [
+    { id: 'TRN-001', date: '2024-05-28', description: 'Sale of 10 Wireless Mouses', amount: 299.90, type: 'Cash In' },
+    { id: 'TRN-002', date: '2024-05-27', description: 'Purchase of T-Shirts from Fashion Hub', amount: -200.00, type: 'Cash Out' },
 ];

@@ -31,4 +31,40 @@ export type Company = {
     address: string;
 };
 
-    
+export type Sale = {
+    id: string;
+    customer: string;
+    date: string;
+    status: 'Paid' | 'Pending';
+    total: number;
+}
+
+export type PurchaseOrder = {
+    id: string;
+    supplier: string;
+    date: string;
+    status: 'Pending' | 'Shipped' | 'Delivered';
+    total: number;
+}
+
+export type Customer = {
+    id: string;
+    name: string;
+    email: string;
+    totalSpent: number;
+}
+
+export type Supplier = {
+    id: string;
+    name: string;
+    contact: string;
+    category: string;
+};
+
+export type Transaction = {
+    id: string;
+    date: string;
+    description: string;
+    amount: number;
+    type: 'Cash In' | 'Cash Out';
+};

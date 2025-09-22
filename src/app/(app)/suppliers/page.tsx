@@ -31,22 +31,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
+import { useData } from '@/contexts/data-context';
+import type { Supplier } from '@/lib/types';
 
-type Supplier = {
-    id: string;
-    name: string;
-    contact: string;
-    category: string;
-};
-
-const initialSuppliers: Supplier[] = [
-    { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics' },
-    { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com', category: 'Apparel' },
-];
 
 export default function SuppliersPage() {
     const { currentUser } = useUser();
-    const [suppliers, setSuppliers] = React.useState<Supplier[]>(initialSuppliers);
+    const { suppliers, addSupplier, updateSupplier, deleteSupplier } = useData();
     const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
@@ -59,7 +50,7 @@ export default function SuppliersPage() {
     };
 
     const handleDelete = (supplierId: string) => {
-        setSuppliers(prev => prev.filter(s => s.id !== supplierId));
+        deleteSupplier(supplierId);
         toast({ title: 'Success', description: 'Supplier deleted successfully.'});
     };
 
@@ -75,14 +66,8 @@ export default function SuppliersPage() {
             return;
           }
           
-          const newSupplier: Supplier = {
-            id: `SUP-0${suppliers.length + 1}`,
-            name,
-            contact,
-            category
-          };
+          addSupplier({ name, contact, category });
     
-          setSuppliers(prev => [newSupplier, ...prev]);
           toast({ title: 'Success', description: 'Supplier added successfully.'});
           setOpen(false);
           setName('');
@@ -141,9 +126,7 @@ export default function SuppliersPage() {
         const handleSave = () => {
             if(!selectedSupplier || !name || !contact || !category) return;
 
-            setSuppliers(prev => prev.map(s => 
-                s.id === selectedSupplier.id ? { ...s, name, contact, category } : s
-            ));
+            updateSupplier(selectedSupplier.id, { name, contact, category });
             toast({ title: 'Success', description: 'Supplier updated successfully.'});
             setIsEditDialogOpen(false);
             setSelectedSupplier(null);

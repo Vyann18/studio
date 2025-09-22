@@ -22,17 +22,14 @@ import {
   ShoppingCart,
   TrendingUp,
 } from 'lucide-react';
+import { useData } from '@/contexts/data-context';
 
 export default function DashboardPage() {
-  const lowStockItems = [
-    { name: 'Men\'s T-Shirt', quantity: 8 },
-    { name: 'Bluetooth Speaker', quantity: 0 },
-  ];
+  const { inventory, purchaseOrders } = useData();
   
-  const pendingOrders = [
-    { id: 'PO-001', supplier: 'TechGear Inc.', status: 'Pending' },
-    { id: 'PO-002', supplier: 'Fashion Hub', status: 'Shipped' },
-  ];
+  const lowStockItems = inventory.filter(item => item.quantity > 0 && item.quantity <= 10);
+  
+  const pendingOrders = purchaseOrders;
 
   return (
     <div className="grid gap-6">

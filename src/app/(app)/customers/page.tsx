@@ -31,22 +31,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/contexts/user-context';
+import { useData } from '@/contexts/data-context';
+import type { Customer } from '@/lib/types';
 
-type Customer = {
-    id: string;
-    name: string;
-    email: string;
-    totalSpent: number;
-}
-
-const initialCustomers: Customer[] = [
-    { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50 },
-    { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com', totalSpent: 850.00 },
-];
 
 export default function CustomersPage() {
     const { currentUser } = useUser();
-    const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers);
+    const { customers, addCustomer, updateCustomer, deleteCustomer } = useData();
     const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
@@ -59,7 +50,7 @@ export default function CustomersPage() {
     };
 
     const handleDelete = (customerId: string) => {
-        setCustomers(prev => prev.filter(c => c.id !== customerId));
+        deleteCustomer(customerId);
         toast({ title: 'Success', description: 'Customer deleted successfully.'});
     };
 
@@ -74,14 +65,7 @@ export default function CustomersPage() {
             return;
           }
           
-          const newCustomer = {
-            id: `CUS-0${customers.length + 1}`,
-            name,
-            email,
-            totalSpent: 0
-          };
-    
-          setCustomers(prev => [newCustomer, ...prev]);
+          addCustomer({ name, email });
           toast({ title: 'Success', description: 'Customer added successfully.'});
           setOpen(false);
           setName('');
@@ -133,9 +117,7 @@ export default function CustomersPage() {
         const handleSave = () => {
             if(!selectedCustomer || !name || !email) return;
 
-            setCustomers(prev => prev.map(c => 
-                c.id === selectedCustomer.id ? { ...c, name, email } : c
-            ));
+            updateCustomer(selectedCustomer.id, { name, email });
             toast({ title: 'Success', description: 'Customer updated successfully.'});
             setIsEditDialogOpen(false);
             setSelectedCustomer(null);

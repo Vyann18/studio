@@ -3,7 +3,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { UserProvider } from '@/contexts/user-context';
-import { InventoryProvider } from '@/contexts/inventory-context';
+import { DataProvider } from '@/contexts/data-context';
 
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -22,10 +22,10 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} font-sans dark`} suppressHydrationWarning>
       <body>
         <UserProvider>
-          <InventoryProvider>
+          <DataProvider>
             {children}
             <Toaster />
-          </InventoryProvider>
+          </DataProvider>
         </UserProvider>
       </body>
     </html>

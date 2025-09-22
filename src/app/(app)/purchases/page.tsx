@@ -33,32 +33,15 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser } from '@/contexts/user-context';
+import { useData } from '@/contexts/data-context';
+import type { PurchaseOrder } from '@/lib/types';
 
-type PurchaseOrder = {
-    id: string;
-    supplier: string;
-    date: string;
-    status: 'Pending' | 'Shipped' | 'Delivered';
-    total: number;
-}
-
-const initialPurchaseOrders: PurchaseOrder[] = [
-    { id: 'PO-001', supplier: 'TechGear Inc.', date: '2024-05-28', status: 'Delivered', total: 1250.00 },
-    { id: 'PO-002', supplier: 'Fashion Hub', date: '2024-05-27', status: 'Shipped', total: 800.00 },
-    { id: 'PO-003', supplier: 'Global Foods', date: '2024-05-26', status: 'Pending', total: 750.00 },
-];
-
-const initialSuppliers = [
-    { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com' },
-    { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com' },
-];
 
 const statuses: PurchaseOrder['status'][] = ['Pending', 'Shipped', 'Delivered'];
 
 export default function PurchasesPage() {
     const { currentUser } = useUser();
-    const [purchaseOrders, setPurchaseOrders] = React.useState(initialPurchaseOrders);
-    const [suppliers] = React.useState(initialSuppliers);
+    const { purchaseOrders, suppliers, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } = useData();
     const [selectedPO, setSelectedPO] = React.useState<PurchaseOrder | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
@@ -71,30 +54,26 @@ export default function PurchasesPage() {
     };
 
     const handleDelete = (poId: string) => {
-        setPurchaseOrders(prev => prev.filter(po => po.id !== poId));
+        deletePurchaseOrder(poId);
         toast({ title: 'Success', description: 'Purchase Order deleted successfully.'});
     };
 
     const AddPurchaseOrderDialog = () => {
         const [open, setOpen] = React.useState(false);
-        const [supplier, setSupplier] = React.useState('');
+        const [supplierName, setSupplierName] = React.useState('');
         const [total, setTotal] = React.useState('');
     
         const handleAdd = () => {
-          if(!supplier || !total) {
+          if(!supplierName || !total) {
             toast({ title: 'Error', description: 'Please fill all fields.', variant: 'destructive'});
             return;
           }
           
-          const newPO: PurchaseOrder = {
-            id: `PO-00${purchaseOrders.length + 1}`,
-            supplier,
-            date: new Date().toISOString().split('T')[0],
-            status: 'Pending',
+          addPurchaseOrder({
+            supplier: supplierName,
             total: parseFloat(total),
-          };
+          });
     
-          setPurchaseOrders(prev => [newPO, ...prev]);
           toast({ title: 'Success', description: 'Purchase Order created successfully.'});
           setOpen(false);
         }
@@ -115,7 +94,7 @@ export default function PurchasesPage() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="supplier" className="text-right">Supplier</Label>
-                             <Select onValueChange={setSupplier} value={supplier}>
+                             <Select onValueChange={setSupplierName} value={supplierName}>
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select a supplier" />
                                 </SelectTrigger>
@@ -153,9 +132,7 @@ export default function PurchasesPage() {
         const handleSave = () => {
             if (!selectedPO || !supplier || !total) return;
 
-            setPurchaseOrders(prev => prev.map(po => 
-                po.id === selectedPO.id ? { ...po, supplier, total: parseFloat(total), status } : po
-            ));
+            updatePurchaseOrder(selectedPO.id, { supplier, total: parseFloat(total), status });
             toast({ title: 'Success', description: 'Purchase Order updated successfully.'});
             setIsEditDialogOpen(false);
             setSelectedPO(null);

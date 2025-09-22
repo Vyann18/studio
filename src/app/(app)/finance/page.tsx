@@ -32,16 +32,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-const initialTransactions = [
-    { id: 'TRN-001', date: '2024-05-28', description: 'Sale of 10 Wireless Mouses', amount: 299.90, type: 'Cash In' },
-    { id: 'TRN-002', date: '2024-05-27', description: 'Purchase of T-Shirts from Fashion Hub', amount: -200.00, type: 'Cash Out' },
-    { id: 'TRN-003', date: '2024-05-26', description: 'Sale of 5 Scented Candles', amount: 90.00, type: 'Cash In' },
-    { id: 'TRN-004', date: '2024-05-25', description: 'Office Supplies', amount: -75.50, type: 'Cash Out' },
-];
+import { useData } from '@/contexts/data-context';
 
 export default function FinancePage() {
-  const [transactions, setTransactions] = React.useState(initialTransactions);
+  const { transactions, addTransaction } = useData();
   const { toast } = useToast();
 
   const totalCashIn = transactions.filter(t => t.type === 'Cash In').reduce((acc, t) => acc + t.amount, 0);
@@ -60,15 +54,12 @@ export default function FinancePage() {
         return;
       }
       
-      const newTransaction = {
-        id: `TRN-00${transactions.length + 1}`,
-        date: new Date().toISOString().split('T')[0],
+      addTransaction({
         description,
         amount: type === 'Cash In' ? parseFloat(amount) : -parseFloat(amount),
         type,
-      };
+      });
 
-      setTransactions(prev => [...prev, newTransaction]);
       toast({ title: 'Success', description: 'Transaction added successfully.'});
       setOpen(false);
     }

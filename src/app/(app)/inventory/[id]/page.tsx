@@ -10,7 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
-import { useInventory } from '@/contexts/inventory-context';
+import { useData } from '@/contexts/data-context';
 
 const chartConfig = {
   quantity: {
@@ -20,8 +20,8 @@ const chartConfig = {
 };
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const { inventory } = useInventory();
-  const item = inventory.find((i) => i.id === params.id);
+  const { getItemById } = useData();
+  const item = getItemById(params.id);
 
   if (!item) {
     notFound();

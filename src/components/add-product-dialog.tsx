@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useInventory } from '@/contexts/inventory-context';
-import { categories, suppliers } from '@/lib/data';
+import { useData } from '@/contexts/data-context';
+import { categories, supplierNames } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import type { Category } from '@/lib/types';
 
@@ -30,7 +30,7 @@ export function AddProductDialog() {
   const [supplier, setSupplier] = React.useState('');
   const [cost, setCost] = React.useState('');
   const [price, setPrice] = React.useState('');
-  const { addInventoryItem } = useInventory();
+  const { addInventoryItem, suppliers } = useData();
   const { toast } = useToast();
 
   const resetForm = () => {
@@ -58,7 +58,6 @@ export function AddProductDialog() {
     }
 
     const newItem = {
-      id: `item-${Date.now()}`,
       name,
       sku,
       quantity: parseInt(quantity, 10),
@@ -66,8 +65,6 @@ export function AddProductDialog() {
       supplier,
       cost: parseFloat(cost),
       price: parseFloat(price),
-      lastUpdated: new Date().toISOString(),
-      history: [{ date: new Date().toISOString(), quantity: parseInt(quantity, 10) }]
     };
 
     addInventoryItem(newItem);
@@ -126,7 +123,7 @@ export function AddProductDialog() {
                     <SelectValue placeholder="Select a supplier" />
                 </SelectTrigger>
                 <SelectContent>
-                    {suppliers.map(sup => <SelectItem key={sup} value={sup}>{sup}</SelectItem>)}
+                    {suppliers.map(sup => <SelectItem key={sup.id} value={sup.name}>{sup.name}</SelectItem>)}
                 </SelectContent>
             </Select>
           </div>

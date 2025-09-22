@@ -30,12 +30,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useInventory } from '@/contexts/inventory-context';
+import { useData } from '@/contexts/data-context';
 
 
 export default function InventoryPage() {
   const { currentUser } = useUser();
-  const { inventory, adjustStock, removeInventoryItem } = useInventory();
+  const { inventory, adjustStock, removeInventoryItem } = useData();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = React.useState('');
   

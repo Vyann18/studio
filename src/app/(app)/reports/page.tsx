@@ -16,12 +16,12 @@ import {
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { useInventory } from '@/contexts/inventory-context';
+import { useData } from '@/contexts/data-context';
 
 type ReportType = 'stock-levels' | 'low-stock';
 
 export default function ReportsPage() {
-  const { inventory } = useInventory();
+  const { inventory } = useData();
   const [reportData, setReportData] = useState<InventoryItem[] | null>(null);
   const [reportType, setReportType] = useState<ReportType | null>(null);
 
