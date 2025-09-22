@@ -14,16 +14,22 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useUser();
+    const { login, signInWithGoogle, currentUser } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+
+    useEffect(() => {
+        if (currentUser) {
+            router.push('/dashboard');
+        }
+    }, [currentUser, router]);
 
     const handleLogin = (event: React.FormEvent) => {
         event.preventDefault();
@@ -43,6 +49,20 @@ export default function LoginPage() {
             });
         }
     }
+
+    const handleGoogleSignIn = async () => {
+        try {
+            await signInWithGoogle();
+            // The useEffect will handle the redirect
+        } catch (error) {
+            toast({
+                title: "Google Sign-In Failed",
+                description: "Could not sign in with Google. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -93,7 +113,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
                 Login
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
                 Login with Google
             </Button>
             </div>

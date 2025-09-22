@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
@@ -41,10 +41,15 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const router = useRouter();
-  const { addUser } = useUser();
+  const { addUser, signInWithGoogle, currentUser } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    if (currentUser) {
+        router.push('/dashboard');
+    }
+  }, [currentUser, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,6 +82,19 @@ export default function SignupPage() {
         });
     }
   }
+  
+  const handleGoogleSignIn = async () => {
+    try {
+        await signInWithGoogle();
+        // The useEffect will handle the redirect
+    } catch (error) {
+        toast({
+            title: "Google Sign-Up Failed",
+            description: "Could not sign up with Google. Please try again.",
+            variant: "destructive",
+        });
+    }
+  };
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -155,7 +173,7 @@ export default function SignupPage() {
             <Button type="submit" className="w-full">
                 Create an account
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
                 Sign up with Google
             </Button>
             </form>

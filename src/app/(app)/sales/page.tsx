@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MoreHorizontal } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,27 +22,53 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/contexts/user-context';
 
-const initialSales = [
+type Sale = {
+    id: string;
+    customer: string;
+    date: string;
+    status: 'Paid' | 'Pending';
+    total: number;
+}
+
+const initialSales: Sale[] = [
     { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90 },
     { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90 },
     { id: 'INV-003', customer: 'Charlie Brown', date: '2024-05-26', status: 'Paid', total: 90.00 },
 ];
 
-// This would typically come from a context or API
 const initialCustomers = [
     { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com' },
     { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com' },
 ];
 
+const statuses: Sale['status'][] = ['Paid', 'Pending'];
+
 export default function SalesPage() {
+    const { currentUser } = useUser();
     const [sales, setSales] = React.useState(initialSales);
     const [customers] = React.useState(initialCustomers);
+    const [selectedSale, setSelectedSale] = React.useState<Sale | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
     const { toast } = useToast();
+
+    const canManage = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+
+    const handleEditClick = (sale: Sale) => {
+        setSelectedSale(sale);
+        setIsEditDialogOpen(true);
+    };
 
     const AddSaleDialog = () => {
         const [open, setOpen] = React.useState(false);
@@ -59,7 +85,7 @@ export default function SalesPage() {
             id: `INV-00${sales.length + 1}`,
             customer,
             date: new Date().toISOString().split('T')[0],
-            status: 'Pending',
+            status: 'Pending' as 'Pending',
             total: parseFloat(total),
           };
     
@@ -104,7 +130,55 @@ export default function SalesPage() {
                 </DialogContent>
             </Dialog>
         )
-      }
+    }
+
+    const EditSaleDialog = () => {
+        const [status, setStatus] = React.useState<Sale['status']>(selectedSale?.status || 'Pending');
+
+        React.useEffect(() => {
+            if(selectedSale) {
+                setStatus(selectedSale.status);
+            }
+        }, [selectedSale]);
+
+        const handleSave = () => {
+            if(!selectedSale) return;
+
+            setSales(prev => prev.map(s => 
+                s.id === selectedSale.id ? { ...s, status } : s
+            ));
+            toast({ title: 'Success', description: 'Sale status updated successfully.'});
+            setIsEditDialogOpen(false);
+            setSelectedSale(null);
+        };
+
+        return (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Sale Status</DialogTitle>
+                        <DialogDescription>Update the payment status for invoice {selectedSale?.id}.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="edit-status" className="text-right">Status</Label>
+                            <Select onValueChange={(v) => setStatus(v as any)} value={status}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select a status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSave}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    };
 
   return (
     <div className="space-y-6">
@@ -132,6 +206,7 @@ export default function SalesPage() {
                           <TableHead>Date</TableHead>
                           <TableHead>Payment Status</TableHead>
                           <TableHead className="text-right">Total</TableHead>
+                          {canManage && <TableHead className="text-right">Actions</TableHead>}
                       </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -144,6 +219,20 @@ export default function SalesPage() {
                           <Badge variant={sale.status === 'Paid' ? 'secondary' : 'destructive'}>{sale.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right">${sale.total.toFixed(2)}</TableCell>
+                          {canManage && (
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <MoreHorizontal className="h-4 w-4"/>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuItem onClick={() => handleEditClick(sale)}>Edit Status</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                          )}
                       </TableRow>
                       ))}
                   </TableBody>
@@ -151,6 +240,7 @@ export default function SalesPage() {
               </div>
           </CardContent>
       </Card>
+      {canManage && <EditSaleDialog />}
     </div>
   );
 }
