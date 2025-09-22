@@ -4,12 +4,13 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
-import { auth } from '@/lib/firebase';
+import { auth, googleProvider } from '@/lib/firebase';
 import { 
   onAuthStateChanged, 
   signOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
   User as FirebaseUser 
 } from 'firebase/auth';
 
@@ -20,6 +21,7 @@ type UserContextType = {
   users: User[];
   companies: Company[];
   login: (email: string, password: string) => Promise<User | null>;
+  signInWithGoogle: () => Promise<User | null>;
   logout: () => void;
   addUser: (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId' | 'password'> & { password?: string; name: string }) => Promise<User | null>;
   addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
@@ -43,27 +45,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isFirebaseConfigured()) {
       console.warn('Firebase is not configured, skipping auth state change listener.');
-      setCurrentUser(null); // Set to null to signify "not logged in"
+      setCurrentUser(null);
       return;
     }
-
+  
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // User is signed in.
         setUsers(prevUsers => {
           const existingUser = prevUsers.find(u => u.email === firebaseUser.email);
           if (existingUser) {
             setCurrentUser(existingUser);
             return prevUsers;
           } else {
-            // New user from signup.
-            const tempCompanyId = 'EJY1UT'; // Assign to default company for demo
+            const tempCompanyId = 'EJY1UT';
             const newUser: User = {
               id: firebaseUser.uid,
-              name: firebaseUser.displayName || 'New User',
+              name: firebaseUser.displayName || 'New Google User',
               email: firebaseUser.email!,
               role: 'user',
-              avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
               companyId: tempCompanyId,
             };
             setCurrentUser(newUser);
@@ -71,14 +71,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
         });
       } else {
-        // User is signed out
         setCurrentUser(null);
         setCompanyIdVerified(false);
       }
     });
-
+  
     return () => unsubscribe();
-  }, []);
+  }, []); // Removed `users` from dependencies to prevent re-running on every user list change
 
 
   const login = async (email: string, password: string): Promise<User | null> => {
@@ -87,14 +86,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
+      await signInWithEmailAndPassword(auth, email, password);
       // onAuthStateChanged will handle setting the current user.
-      const appUser = users.find(u => u.email === firebaseUser.email);
+      const appUser = users.find(u => u.email === email);
       return appUser || null;
     } catch (error) {
       console.error("Error during email/password sign-in:", error);
       return null;
+    }
+  };
+
+  const signInWithGoogle = async (): Promise<User | null> => {
+    if (!isFirebaseConfigured()) {
+        console.error("Firebase is not configured. Cannot sign in with Google.");
+        return null;
+    }
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const firebaseUser = result.user;
+        // onAuthStateChanged will handle setting the user state.
+        const appUser = users.find(u => u.email === firebaseUser.email);
+        return appUser || null;
+    } catch (error) {
+        console.error("Error during Google sign-in:", error);
+        return null;
     }
   };
 
@@ -106,12 +121,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error signing out:", error);
         }
     }
-    // onAuthStateChanged will handle setting user to null.
   };
 
   const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId' | 'password'> & { password?: string; name: string }): Promise<User | null> => {
     if (users.some(u => u.email === userData.email)) {
-        return null; // User already exists in local state, Firebase will also throw an error
+        return null;
     }
     if (!isFirebaseConfigured() || !userData.password) {
       console.error("Firebase is not configured or password is not provided.");
@@ -120,8 +134,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
       const firebaseUser = userCredential.user;
-      // onAuthStateChanged will handle creating the user in the app's state.
-      // We can return a temporary object for immediate feedback if needed.
+      
       const tempCompanyId = "EJY1UT";
       const newUser: User = {
         id: firebaseUser.uid,
@@ -131,6 +144,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         role: 'user', 
         avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
       };
+      // Let onAuthStateChanged handle the final state update.
+      setUsers(prev => [...prev, newUser]);
       return newUser;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -171,7 +186,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (updatedCurrentUser) {
             setCurrentUser(updatedCurrentUser);
         } else {
-            // Current user was deleted, so log out
             logout();
         }
     }
@@ -193,6 +207,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         companyIdVerified,
         verifyCompanyId,
         login,
+        signInWithGoogle,
         logout,
         addUser,
         addCompany,
