@@ -4,15 +4,6 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
-import { auth, googleProvider } from '@/lib/firebase';
-import { 
-  onAuthStateChanged, 
-  signOut,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  User as FirebaseUser 
-} from 'firebase/auth';
 
 type UserContextType = {
   currentUser: User | null | undefined; // undefined for initial loading state
@@ -30,10 +21,6 @@ type UserContextType = {
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
-
-const isFirebaseConfigured = () => {
-    return auth && typeof auth.onAuthStateChanged === 'function';
-};
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -146,7 +133,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         companyIdVerified,
         verifyCompanyId,
         login,
-        signInWithGoogle,
         logout,
         addUser,
         addCompany,
