@@ -4,16 +4,8 @@ import type { InventoryItem, User, Category } from './types';
 // The user database is managed by Firebase Authentication.
 // The admin user will be created programmatically if it doesn't exist.
 export const users: User[] = [
-  // This list can be kept for UI bootstrapping or cleared.
-  // Firebase is now the source of truth.
-  {
-    id: 'user-1',
-    name: 'Admin User',
-    email: 'adminuser@example.com',
-    role: 'admin',
-    avatar: 'https://i.pravatar.cc/150?u=admin',
-    companyId: 'EJY1UT'
-  },
+  // This list is now managed by Firebase. 
+  // It will be populated dynamically by onAuthStateChanged listener.
 ];
 
 export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];
