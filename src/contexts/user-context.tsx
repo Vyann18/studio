@@ -4,13 +4,6 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
-import { auth } from '@/lib/firebase';
-import { 
-  onAuthStateChanged, 
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
 
 type UserContextType = {
   currentUser: User | null | undefined; // undefined for initial loading state
@@ -20,7 +13,7 @@ type UserContextType = {
   companies: Company[];
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }) => Promise<User | null>;
+  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>) => Promise<User | null>;
   addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
   removeUser: (userId: string) => void;
@@ -35,133 +28,59 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
-   useEffect(() => {
-    const initializeAdmin = async () => {
-      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-      const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-
-      if (adminEmail && adminPassword && auth) {
-        try {
-          // Try to sign in silently. If it fails, the user likely doesn't exist.
-          await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-        } catch (error: any) {
-          if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            // User not found, so create them
-            try {
-              await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-              console.log('Admin user created successfully.');
-            } catch (createError) {
-              console.error('Error creating admin user:', createError);
-            }
-          }
-        } finally {
-            // Always sign out after the check to not affect manual login
-            if(auth.currentUser?.email === adminEmail) {
-                await signOut(auth);
-            }
+  useEffect(() => {
+    // Check for a logged-in user in localStorage on initial load
+    try {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setCurrentUser(user);
+        // Also check if company ID was already verified
+        const storedCompanyVerified = localStorage.getItem('companyIdVerified');
+        if (storedCompanyVerified === 'true') {
+            setCompanyIdVerified(true);
         }
+      } else {
+        setCurrentUser(null);
       }
-    };
-    
-    initializeAdmin();
+    } catch (error) {
+        setCurrentUser(null);
+    }
   }, []);
 
-  useEffect(() => {
-    if (!auth) {
-        setCurrentUser(null); 
-        return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-            const existingUser = users.find(u => u.email === firebaseUser.email);
-            if (existingUser) {
-                setCurrentUser(existingUser);
-                localStorage.setItem('currentUser', JSON.stringify(existingUser));
-            } else {
-                const tempCompanyId = "EJY1UT"; // Default company for new users
-                const newUser: User = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
-                    email: firebaseUser.email!,
-                    role: firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL ? 'admin' : 'user', // Assign admin role
-                    avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-                    companyId: tempCompanyId,
-                };
-                
-                setUsers(prevUsers => {
-                  const userExists = prevUsers.some(u => u.email === newUser.email);
-                  if (userExists) return prevUsers;
-                  
-                  const updatedUsers = [...prevUsers, newUser];
-                  setCurrentUser(newUser);
-localStorage.setItem('currentUser', JSON.stringify(newUser));
-                  return updatedUsers;
-                });
-            }
-        } else {
-            setCurrentUser(null);
-            setCompanyIdVerified(false);
-            localStorage.removeItem('currentUser');
-        }
-    });
-
-    return () => unsubscribe();
-  }, [users]);
-
-
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (!auth) {
-        console.error("Firebase auth is not initialized.");
-        return false;
+    const user = users.find(u => u.email === email && u.password === password);
+    if (user) {
+      const userToStore = { ...user };
+      // Never store password in local storage
+      delete userToStore.password;
+      setCurrentUser(userToStore);
+      localStorage.setItem('currentUser', JSON.stringify(userToStore));
+      return true;
     }
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will handle setting the current user.
-      // We return a promise that resolves when the user is set.
-      return new Promise((resolve, reject) => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-          unsubscribe(); 
-          if (firebaseUser) {
-            resolve(true);
-          } else {
-            reject(new Error("Login failed: User not found after authentication."));
-          }
-        });
-      });
-    } catch (error: any) {
-      console.error("Login Error:", error);
-      if (error.code === 'auth/operation-not-allowed') {
-        console.error("Firebase sign-in method 'Email/Password' is not enabled. Please enable it in the Firebase console.");
-        // We can optionally throw a more user-friendly error or handle it
-      }
-      return false;
-    }
+    return false;
   };
 
-
-  const logout = async () => {
-    if (!auth) return;
-    await signOut(auth);
+  const logout = () => {
+    setCurrentUser(null);
+    setCompanyIdVerified(false);
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('companyIdVerified');
   };
 
-  const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }): Promise<User | null> => {
-    if (!auth || !userData.password) return null;
-    
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-      // onAuthStateChanged will handle adding user to local state
-      return { 
-        id: userCredential.user.uid, 
-        name: userData.name,
-        email: userData.email,
-        role: 'user', 
-        avatar: `https://i.pravatar.cc/150?u=${userCredential.user.uid}`,
-        companyId: 'EJY1UT' 
-      };
-    } catch(error) {
-      console.error("Signup error:", error);
-      return null;
+  const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId' | 'password'> & { password?: string }): Promise<User | null> => {
+    if (users.some(u => u.email === userData.email)) {
+      return null; // User already exists
     }
+    const newUser: User = {
+      id: `user-${Date.now()}`,
+      ...userData,
+      role: 'user',
+      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+      companyId: 'EJY1UT' // Default company for new sign-ups
+    };
+    setUsers(prev => [...prev, newUser]);
+    return newUser;
   };
 
   const addCompany = (company: Company) => {
@@ -169,8 +88,17 @@ localStorage.setItem('currentUser', JSON.stringify(newUser));
   };
 
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
-    console.warn("Password update feature not fully implemented for Firebase auth.");
-    return false;
+    let success = false;
+    setUsers(prevUsers =>
+      prevUsers.map(u => {
+        if (u.id === userId && u.password === oldPass) {
+          success = true;
+          return { ...u, password: newPass };
+        }
+        return u;
+      })
+    );
+    return success;
   };
 
   const removeUser = (userId: string) => {
@@ -182,8 +110,10 @@ localStorage.setItem('currentUser', JSON.stringify(newUser));
     if (currentUser) {
         const updatedCurrentUser = updatedUsers.find(u => u.id === currentUser.id);
         if (updatedCurrentUser) {
-            setCurrentUser(updatedCurrentUser);
-            localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
+            const userToStore = { ...updatedCurrentUser };
+            delete userToStore.password;
+            setCurrentUser(userToStore);
+            localStorage.setItem('currentUser', JSON.stringify(userToStore));
         } else {
             logout();
         }
@@ -194,6 +124,7 @@ localStorage.setItem('currentUser', JSON.stringify(newUser));
     const normalizedId = id.toUpperCase();
     if (currentUser && companies.some(c => c.id === normalizedId) && currentUser.companyId === normalizedId) {
         setCompanyIdVerified(true);
+        localStorage.setItem('companyIdVerified', 'true');
         return true;
     }
     return false;

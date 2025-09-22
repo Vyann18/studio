@@ -1,11 +1,33 @@
 import type { InventoryItem, User, Category } from './types';
 
-// NOTE: This initial user list is for bootstrapping the UI.
-// The user database is managed by Firebase Authentication.
-// The admin user will be created programmatically if it doesn't exist.
 export const users: User[] = [
-  // This list is now managed by Firebase. 
-  // It will be populated dynamically by onAuthStateChanged listener.
+  {
+    id: 'admin-user',
+    name: 'Admin User',
+    email: 'adminuser@example.com',
+    password: 'vyan16231#',
+    role: 'admin',
+    avatar: 'https://i.pravatar.cc/150?u=admin-user',
+    companyId: 'EJY1UT',
+  },
+  {
+    id: 'manager-user',
+    name: 'Manager User',
+    email: 'manager@example.com',
+    password: 'password123',
+    role: 'manager',
+    avatar: 'https://i.pravatar.cc/150?u=manager-user',
+    companyId: 'EJY1UT',
+  },
+  {
+    id: 'employee-user',
+    name: 'Employee User',
+    email: 'employee@example.com',
+    password: 'password123',
+    role: 'employee',
+    avatar: 'https://i.pravatar.cc/150?u=employee-user',
+    companyId: 'EJY1UT',
+  }
 ];
 
 export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];

@@ -73,7 +73,7 @@ export default function SignupPage() {
     } else {
         toast({
             title: "Signup Failed",
-            description: "An account with this email already exists or another error occurred.",
+            description: "An account with this email already exists.",
             variant: "destructive",
         });
     }

@@ -28,25 +28,17 @@ export default function LoginPage() {
 
     const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
-        try {
-            const success = await login(email.trim(), password);
-            if (success) {
-                toast({
-                    title: "Login Successful",
-                    description: `Welcome back!`,
-                });
-                router.push('/dashboard');
-            } else {
-                 toast({
-                    title: "Login Failed",
-                    description: "Invalid email or password. Please try again or check if Email/Password sign-in is enabled in your Firebase project.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
+        const success = await login(email.trim(), password);
+        if (success) {
+            toast({
+                title: "Login Successful",
+                description: `Welcome back!`,
+            });
+            router.push('/dashboard');
+        } else {
              toast({
                 title: "Login Failed",
-                description: "An unexpected error occurred. Please try again.",
+                description: "Invalid email or password. Please try again.",
                 variant: "destructive",
             });
         }
