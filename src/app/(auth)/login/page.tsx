@@ -39,14 +39,14 @@ export default function LoginPage() {
             } else {
                  toast({
                     title: "Login Failed",
-                    description: "Invalid email or password. Please try again.",
+                    description: "Invalid email or password. Please try again or check if Email/Password sign-in is enabled in your Firebase project.",
                     variant: "destructive",
                 });
             }
         } catch (error) {
              toast({
                 title: "Login Failed",
-                description: "Invalid email or password. Please try again.",
+                description: "An unexpected error occurred. Please try again.",
                 variant: "destructive",
             });
         }

@@ -94,7 +94,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                   
                   const updatedUsers = [...prevUsers, newUser];
                   setCurrentUser(newUser);
-                  localStorage.setItem('currentUser', JSON.stringify(newUser));
+localStorage.setItem('currentUser', JSON.stringify(newUser));
                   return updatedUsers;
                 });
             }
@@ -128,8 +128,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login Error:", error);
+      if (error.code === 'auth/operation-not-allowed') {
+        console.error("Firebase sign-in method 'Email/Password' is not enabled. Please enable it in the Firebase console.");
+        // We can optionally throw a more user-friendly error or handle it
+      }
       return false;
     }
   };
