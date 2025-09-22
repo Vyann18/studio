@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PlusCircle, Search, Trash2 } from 'lucide-react';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-import type { InventoryItem } from '@/lib/types';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import {
   AlertDialog,
@@ -41,7 +40,7 @@ export default function InventoryPage() {
   
   if (!currentUser) return null;
 
-  const canManageStock = currentUser.role === 'admin' || currentUser.role === 'manager';
+  const canManageStock = currentUser.role === 'admin' || currentUser.role === 'manager' || currentUser.role === 'head';
   const canDeleteItem = currentUser.role === 'admin' || currentUser.role === 'manager';
 
   const handleStockAdjustment = (productId: string, adjustment: number) => {
@@ -128,7 +127,7 @@ export default function InventoryPage() {
                         <TableCell className="text-right">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
+                                    <Button variant="ghost" size="icon" disabled={product.companyId !== currentUser.companyId}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </AlertDialogTrigger>

@@ -1,4 +1,4 @@
-import type { InventoryItem, User, Category, Sale, PurchaseOrder, Customer, Supplier, Transaction } from './types';
+import type { InventoryItem, User, Sale, PurchaseOrder, Customer, Supplier, Transaction } from './types';
 
 export const users: User[] = [
   {
@@ -20,6 +20,15 @@ export const users: User[] = [
     companyId: 'EJY1UT',
   },
   {
+    id: 'head-user',
+    name: 'Head User',
+    email: 'head@example.com',
+    password: 'password123',
+    role: 'head',
+    avatar: 'https://i.pravatar.cc/150?u=head-user',
+    companyId: 'B3Z9P2',
+  },
+  {
     id: 'employee-user',
     name: 'Employee User',
     email: 'employee@example.com',
@@ -29,12 +38,6 @@ export const users: User[] = [
     companyId: 'EJY1UT',
   }
 ];
-
-export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];
-
-// This is now just for populating the dropdowns, not the actual supplier list
-export const supplierNames: string[] = ['TechGear Inc.', 'Fashion Hub', 'Global Foods', 'PrintWorks', 'HomeEssence', 'SoundMax', 'ActiveLife'];
-
 
 export const inventoryItems: InventoryItem[] = [
   {
@@ -53,6 +56,7 @@ export const inventoryItems: InventoryItem[] = [
       { date: '2024-05-01', quantity: 160 },
       { date: '2024-05-20', quantity: 150 },
     ],
+    companyId: 'EJY1UT',
   },
   {
     id: 'item-2',
@@ -70,6 +74,7 @@ export const inventoryItems: InventoryItem[] = [
       { date: '2024-05-01', quantity: 50 },
       { date: '2024-05-22', quantity: 8 },
     ],
+    companyId: 'EJY1UT',
   },
   {
     id: 'item-3',
@@ -87,30 +92,34 @@ export const inventoryItems: InventoryItem[] = [
       { date: '2024-05-01', quantity: 80 },
       { date: '2024-05-18', quantity: 75 },
     ],
+    companyId: 'B3Z9P2',
   },
 ];
 
 export const sales: Sale[] = [
-    { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90 },
-    { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90 },
+    { id: 'INV-001', customer: 'Alice Smith', date: '2024-05-28', status: 'Paid', total: 299.90, companyId: 'EJY1UT' },
+    { id: 'INV-002', customer: 'Bob Johnson', date: '2024-05-27', status: 'Pending', total: 199.90, companyId: 'B3Z9P2' },
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
-    { id: 'PO-001', supplier: 'TechGear Inc.', date: '2024-05-28', status: 'Delivered', total: 1250.00 },
-    { id: 'PO-002', supplier: 'Fashion Hub', date: '2024-05-27', status: 'Shipped', total: 800.00 },
+    { id: 'PO-001', supplier: 'TechGear Inc.', date: '2024-05-28', status: 'Delivered', total: 1250.00, companyId: 'EJY1UT' },
+    { id: 'PO-002', supplier: 'Fashion Hub', date: '2024-05-27', status: 'Shipped', total: 800.00, companyId: 'B3Z9P2' },
 ];
 
 export const customers: Customer[] = [
-    { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50 },
-    { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com', totalSpent: 850.00 },
+    { id: 'CUS-01', name: 'Alice Smith', email: 'alice@example.com', totalSpent: 1250.50, companyId: 'EJY1UT' },
+    { id: 'CUS-02', name: 'Bob Johnson', email: 'bob@example.com', totalSpent: 850.00, companyId: 'B3Z9P2' },
 ];
 
 export const suppliers: Supplier[] = [
-    { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics' },
-    { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com', category: 'Apparel' },
+    { id: 'SUP-01', name: 'TechGear Inc.', contact: 'john@techgear.com', category: 'Electronics', companyId: 'EJY1UT' },
+    { id: 'SUP-02', name: 'Fashion Hub', contact: 'jane@fashionhub.com', category: 'Apparel', companyId: 'B3Z9P2' },
 ];
 
 export const transactions: Transaction[] = [
-    { id: 'TRN-001', date: '2024-05-28', description: 'Sale of 10 Wireless Mouses', amount: 299.90, type: 'Cash In' },
-    { id: 'TRN-002', date: '2024-05-27', description: 'Purchase of T-Shirts from Fashion Hub', amount: -200.00, type: 'Cash Out' },
+    { id: 'TRN-001', date: '2024-05-28', description: 'Sale of 10 Wireless Mouses', amount: 299.90, type: 'Cash In', companyId: 'EJY1UT' },
+    { id: 'TRN-002', date: '2024-05-27', description: 'Purchase of T-Shirts from Fashion Hub', amount: -200.00, type: 'Cash Out', companyId: 'B3Z9P2' },
 ];
+
+export const categories: Category[] = ['Electronics', 'Apparel', 'Groceries', 'Books', 'Home Goods'];
+export const supplierNames: string[] = ['TechGear Inc.', 'Fashion Hub', 'Global Foods', 'PrintWorks', 'HomeEssence', 'SoundMax', 'ActiveLife'];

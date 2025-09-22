@@ -46,10 +46,10 @@ import {
 import { AddCompanyDialog } from '@/components/add-company-dialog';
 
 
-const roles: Role[] = ['admin', 'manager', 'employee', 'user'];
+const roles: Role[] = ['admin', 'manager', 'head', 'employee'];
 
 export default function SettingsPage() {
-  const { currentUser, users, setUsers, updateUserPassword, removeUser, companies } = useUser();
+  const { currentUser, users, setUsers, updateUserPassword, removeUser, companies, companyGroups } = useUser();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
@@ -120,6 +120,11 @@ export default function SettingsPage() {
     return null;
   }
 
+  const getGroupName = (groupId?: string) => {
+    if (!groupId) return 'N/A';
+    return companyGroups.find(g => g.id === groupId)?.name || 'Unknown Group';
+  }
+
   return (
     <div className="space-y-6">
        <div>
@@ -150,12 +155,13 @@ export default function SettingsPage() {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Company</TableHead>
                     <TableHead className="w-[180px]">Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.filter(u => u.companyId === currentUser.companyId).map((user) => (
+                  {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -167,6 +173,7 @@ export default function SettingsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
+                      <TableCell>{companies.find(c => c.id === user.companyId)?.name || 'N/A'}</TableCell>
                       <TableCell>
                         <Select 
                           defaultValue={user.role} 
@@ -258,6 +265,7 @@ export default function SettingsPage() {
                             <TableRow>
                                 <TableHead>Company Name</TableHead>
                                 <TableHead>Unique ID</TableHead>
+                                <TableHead>Company Group</TableHead>
                                 <TableHead>Address</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -273,6 +281,7 @@ export default function SettingsPage() {
                                             </Button>
                                         </div>
                                     </TableCell>
+                                    <TableCell>{getGroupName(company.groupId)}</TableCell>
                                     <TableCell>{company.address}</TableCell>
                                 </TableRow>
                             ))}

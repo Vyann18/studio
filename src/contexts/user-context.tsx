@@ -1,9 +1,9 @@
 
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { User, Company } from '@/lib/types';
+import type { User, Company, CompanyGroup } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
-import { companies as initialCompanies } from '@/lib/companies';
+import { companies as initialCompanies, companyGroups as initialCompanyGroups } from '@/lib/companies';
 
 type UserContextType = {
   currentUser: User | null | undefined; // undefined for initial loading state
@@ -11,10 +11,11 @@ type UserContextType = {
   verifyCompanyId: (id: string) => boolean;
   users: User[];
   companies: Company[];
+  companyGroups: CompanyGroup[];
   login: (email: string, password: string) => User | null;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>) => User | null;
-  addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
+  addUser: (user: Omit<User, 'id' | 'role' | 'avatar'>) => User | null;
+  addCompany: (company: Omit<Company, 'id'> & { id: string }, groupName?: string) => void;
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
   removeUser: (userId: string) => void;
   setUsers: (users: User[]) => void;
@@ -22,7 +23,7 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const getInitialState = <T,>(key: string, fallback: T[]): T[] => {
+const getInitialState = <T,>(key: string, fallback: T): T => {
     if (typeof window === 'undefined') {
         return fallback;
     }
@@ -38,31 +39,33 @@ const getInitialState = <T,>(key: string, fallback: T[]): T[] => {
     return fallback;
 };
 
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(() => getInitialState('users', initialUsers));
   const [companies, setCompanies] = useState<Company[]>(() => getInitialState('companies', initialCompanies));
+  const [companyGroups, setCompanyGroups] = useState<CompanyGroup[]>(() => getInitialState('companyGroups', initialCompanyGroups));
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
   useEffect(() => {
-    // Persist users to localStorage whenever they change
     localStorage.setItem('users', JSON.stringify(users));
   }, [users]);
 
   useEffect(() => {
-    // Persist companies to localStorage whenever they change
     localStorage.setItem('companies', JSON.stringify(companies));
   }, [companies]);
 
   useEffect(() => {
-    // On initial load, check if a user is stored in localStorage to persist session
+    localStorage.setItem('companyGroups', JSON.stringify(companyGroups));
+  }, [companyGroups]);
+
+  useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
         const user = JSON.parse(storedUser) as User;
         const fullUser = users.find(u => u.id === user.id);
         setCurrentUser(fullUser || null);
 
-        // Also restore company verification status
         const storedVerification = localStorage.getItem('companyIdVerified');
         if (storedVerification === 'true' && fullUser && fullUser.companyId) {
             setCompanyIdVerified(true);
@@ -70,13 +73,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } else {
         setCurrentUser(null);
     }
-  }, [users]); // Depend on users to re-check when users list changes
+  }, []); 
 
   const login = (email: string, password: string): User | null => {
     const user = users.find(u => u.email === email && u.password === password);
     if (user) {
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
+      // Reset company verification on new login
+      setCompanyIdVerified(false);
+      localStorage.removeItem('companyIdVerified');
       return user;
     }
     return null;
@@ -89,19 +95,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('companyIdVerified');
   };
 
-  const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>): User | null => {
+  const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar'>): User | null => {
     if (users.some(u => u.email === userData.email)) {
         return null; // User already exists
     }
 
-    // Note: In a real app, companyId would come from the verified company context
-    const tempCompanyId = "EJY1UT"; 
-
     const newUser: User = {
         id: `user-${Date.now()}`,
         ...userData,
-        companyId: tempCompanyId,
-        role: 'user', // Default role
+        role: 'employee', // Default role
         avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
     };
 
@@ -109,8 +111,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return newUser;
   };
 
-  const addCompany = (company: Company) => {
-    setCompanies(prevCompanies => [...prevCompanies, company]);
+  const addCompany = (company: Company, groupName?: string) => {
+    let finalCompany = { ...company };
+    if (groupName && groupName.trim() !== '') {
+        let group = companyGroups.find(g => g.name.toLowerCase() === groupName.toLowerCase().trim());
+        if (!group) {
+            group = { id: `GRP-${Date.now()}`, name: groupName.trim() };
+            setCompanyGroups(prev => [...prev, group!]);
+        }
+        finalCompany.groupId = group.id;
+    }
+    setCompanies(prevCompanies => [...prevCompanies, finalCompany]);
   };
 
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
@@ -153,13 +164,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const companyExists = companies.some(c => c.id === normalizedId);
 
     if (currentUser && companyExists) {
+        // Find the user in the current state and update their companyId
         const updatedUsers = users.map(user => 
             user.id === currentUser.id ? { ...user, companyId: normalizedId } : user
         );
+        // This will also trigger the useEffect to save to localStorage
         setUsers(updatedUsers);
+
+        // Update the currentUser in the context's state as well
+        setCurrentUser(prevUser => prevUser ? { ...prevUser, companyId: normalizedId } : null);
 
         setCompanyIdVerified(true);
         localStorage.setItem('companyIdVerified', 'true');
+        // Also update the stored current user to reflect the new companyId
+        const updatedCurrentUserForStorage = { ...currentUser, companyId: normalizedId };
+        localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUserForStorage));
+        
         return true;
     }
     return false;
@@ -170,6 +190,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         currentUser, 
         users, 
         companies,
+        companyGroups,
         companyIdVerified,
         verifyCompanyId,
         login,

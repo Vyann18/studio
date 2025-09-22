@@ -11,9 +11,10 @@ export type InventoryItem = {
   price: number;
   lastUpdated: string;
   history: { date: string; quantity: number }[];
+  companyId: string; // Keep track of original company
 };
 
-export type Role = 'admin' | 'manager' | 'employee' | 'user';
+export type Role = 'admin' | 'manager' | 'head' | 'employee';
 
 export type User = {
   id: string;
@@ -29,7 +30,13 @@ export type Company = {
     id: string;
     name: string;
     address: string;
+    groupId?: string;
 };
+
+export type CompanyGroup = {
+    id: string;
+    name: string;
+}
 
 export type Sale = {
     id: string;
@@ -37,6 +44,7 @@ export type Sale = {
     date: string;
     status: 'Paid' | 'Pending';
     total: number;
+    companyId: string;
 }
 
 export type PurchaseOrder = {
@@ -45,6 +53,7 @@ export type PurchaseOrder = {
     date: string;
     status: 'Pending' | 'Shipped' | 'Delivered';
     total: number;
+    companyId: string;
 }
 
 export type Customer = {
@@ -52,6 +61,7 @@ export type Customer = {
     name: string;
     email: string;
     totalSpent: number;
+    companyId: string;
 }
 
 export type Supplier = {
@@ -59,6 +69,7 @@ export type Supplier = {
     name: string;
     contact: string;
     category: string;
+    companyId: string;
 };
 
 export type Transaction = {
@@ -67,4 +78,5 @@ export type Transaction = {
     description: string;
     amount: number;
     type: 'Cash In' | 'Cash Out';
+    companyId: string;
 };

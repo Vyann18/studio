@@ -19,21 +19,23 @@ import {
   Settings,
   Building,
   Truck,
+  Bell,
+  BarChart2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 
 const allMenuItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'user', 'employee'] },
-    { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'employee', 'user'] },
-    { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'user', 'employee'] },
-    { href: '/customers', label: 'Customers', icon: Users, roles: ['admin', 'manager', 'user', 'employee'] },
-    { href: '/suppliers', label: 'Suppliers', icon: Truck, roles: ['admin', 'manager', 'user', 'employee'] },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager', 'head'] },
+    { href: '/sales', label: 'Sales', icon: Receipt, roles: ['admin', 'manager', 'head', 'employee'] },
+    { href: '/inventory', label: 'Inventory', icon: Boxes, roles: ['admin', 'manager', 'head', 'employee'] },
+    { href: '/purchases', label: 'Purchases', icon: ShoppingCart, roles: ['admin', 'manager', 'head', 'employee'] },
+    { href: '/customers', label: 'Customers', icon: Users, roles: ['admin', 'manager', 'head', 'employee'] },
+    { href: '/suppliers', label: 'Suppliers', icon: Truck, roles: ['admin', 'manager', 'head', 'employee'] },
     { href: '/finance', label: 'Finance', icon: Receipt, roles: ['admin'] },
-    { href: '/reports', label: 'Reports', icon: Receipt, roles: ['admin', 'manager'] },
-    { href: '/restock-alerts', label: 'Restock Alerts', icon: Boxes, roles: ['admin', 'manager'] },
+    { href: '/reports', label: 'Reports', icon: BarChart2, roles: ['admin', 'manager', 'head'] },
+    { href: '/restock-alerts', label: 'Restock Alerts', icon: Bell, roles: ['admin', 'manager', 'head'] },
 ];
 
 export function AppSidebar() {
@@ -75,16 +77,14 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {currentUser.role === 'admin' && (
-             <SidebarMenuItem>
+            <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/settings')}>
                     <Link href="/settings">
-                        <Users />
-                        <span>User Management</span>
+                        <Settings />
+                        <span>Settings</span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
-          )}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

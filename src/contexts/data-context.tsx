@@ -1,50 +1,51 @@
+
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { InventoryItem, User, Category, Sale, PurchaseOrder, Customer, Supplier, Transaction } from '@/lib/types';
+import type { InventoryItem, Sale, PurchaseOrder, Customer, Supplier, Transaction, Company } from '@/lib/types';
 import { inventoryItems as initialInventory, sales as initialSales, purchaseOrders as initialPurchaseOrders, customers as initialCustomers, suppliers as initialSuppliers, transactions as initialTransactions } from '@/lib/data';
 import { useUser } from './user-context';
+import { companies as initialCompanies } from '@/lib/companies';
 
-type CompanyData = {
-  inventory: InventoryItem[];
-  sales: Sale[];
-  purchaseOrders: PurchaseOrder[];
-  customers: Customer[];
-  suppliers: Supplier[];
-  transactions: Transaction[];
-};
-
+// This structure holds data for ALL companies, keyed by companyId
 type AllData = {
-  [companyId: string]: CompanyData;
+  [companyId: string]: {
+    inventory: InventoryItem[];
+    sales: Sale[];
+    purchaseOrders: PurchaseOrder[];
+    customers: Customer[];
+    suppliers: Supplier[];
+    transactions: Transaction[];
+  };
 };
 
 type DataContextType = {
   inventory: InventoryItem[];
-  addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'history'>) => void;
+  addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'history' | 'companyId'>) => void;
   removeInventoryItem: (itemId: string) => void;
   adjustStock: (itemId: string, adjustment: number) => void;
   getItemById: (itemId: string) => InventoryItem | undefined;
   
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'date'>) => void;
+  addSale: (sale: Omit<Sale, 'id' | 'date' | 'companyId'>) => void;
   updateSaleStatus: (saleId: string, status: 'Paid' | 'Pending') => void;
 
   purchaseOrders: PurchaseOrder[];
-  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'date' | 'status'>) => void;
-  updatePurchaseOrder: (poId: string, data: Partial<Omit<PurchaseOrder, 'id'>>) => void;
+  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'date' | 'status' | 'companyId'>) => void;
+  updatePurchaseOrder: (poId: string, data: Partial<Omit<PurchaseOrder, 'id' | 'companyId'>>) => void;
   deletePurchaseOrder: (poId: string) => void;
 
   customers: Customer[];
-  addCustomer: (customer: Omit<Customer, 'id' | 'totalSpent'>) => void;
-  updateCustomer: (customerId: string, data: Partial<Omit<Customer, 'id'>>) => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'totalSpent' | 'companyId'>) => void;
+  updateCustomer: (customerId: string, data: Partial<Omit<Customer, 'id' | 'companyId'>>) => void;
   deleteCustomer: (customerId: string) => void;
 
   suppliers: Supplier[];
-  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
-  updateSupplier: (supplierId: string, data: Partial<Omit<Supplier, 'id'>>) => void;
+  addSupplier: (supplier: Omit<Supplier, 'id'|'companyId'>) => void;
+  updateSupplier: (supplierId: string, data: Partial<Omit<Supplier, 'id' | 'companyId'>>) => void;
   deleteSupplier: (supplierId: string) => void;
 
   transactions: Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date' | 'companyId'>) => void;
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -65,203 +66,296 @@ const getInitialState = <T,>(key: string, fallback: T): T => {
     return fallback;
 };
 
-const initialData: AllData = {
-    'EJY1UT': {
-        inventory: initialInventory,
-        sales: initialSales,
-        purchaseOrders: initialPurchaseOrders,
-        customers: initialCustomers,
-        suppliers: initialSuppliers,
-        transactions: initialTransactions,
-    }
-}
+// Create a more comprehensive initial data structure
+const buildInitialData = (): AllData => {
+  const allData: AllData = {};
+  initialCompanies.forEach(company => {
+    allData[company.id] = {
+      inventory: initialInventory.filter(i => i.companyId === company.id),
+      sales: initialSales.filter(s => s.companyId === company.id),
+      purchaseOrders: initialPurchaseOrders.filter(p => p.companyId === company.id),
+      customers: initialCustomers.filter(c => c.companyId === company.id),
+      suppliers: initialSuppliers.filter(s => s.companyId === company.id),
+      transactions: initialTransactions.filter(t => t.companyId === company.id),
+    };
+  });
+  return allData;
+};
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const { currentUser } = useUser();
-  const [data, setData] = useState<AllData>(() => getInitialState('appData', initialData));
+  const { currentUser, companies } = useUser();
+  const [data, setData] = useState<AllData>(() => getInitialState('appData', buildInitialData()));
 
   useEffect(() => {
     localStorage.setItem('appData', JSON.stringify(data));
   }, [data]);
 
-  const getCompanyData = (): CompanyData => {
+  const setCompanyData = (companyId: string, newCompanyData: Partial<DataContextType>) => {
+    setData(prev => {
+        const existingData = prev[companyId] || { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
+        return {
+            ...prev,
+            [companyId]: { ...existingData, ...newCompanyData }
+        };
+    });
+  };
+
+  const getVisibleData = (): DataContextType => {
     if (!currentUser?.companyId) {
-        return { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
+      return { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
     }
-    // If a company has no data, initialize it with an empty structure
-    if (!data[currentUser.companyId]) {
-      const newCompanyData = { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
-      setData(prev => ({...prev, [currentUser.companyId!]: newCompanyData}));
-      return newCompanyData;
-    }
-    return data[currentUser.companyId];
-  };
 
-  const setCompanyData = (newCompanyData: Partial<CompanyData>) => {
-    if (!currentUser?.companyId) return;
-    setData(prev => ({
-        ...prev,
-        [currentUser.companyId!]: {
-            ...prev[currentUser.companyId!],
-            ...newCompanyData,
+    const userCompany = companies.find(c => c.id === currentUser.companyId);
+    const userRole = currentUser.role;
+
+    // If user is employee or in a non-grouped company, they see only their company's data.
+    if (userRole === 'employee' || !userCompany?.groupId) {
+      return data[currentUser.companyId] || { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
+    }
+    
+    // If user is head, manager, or admin in a grouped company, aggregate data.
+    if (['head', 'manager', 'admin'].includes(userRole) && userCompany.groupId) {
+      const groupCompanyIds = companies.filter(c => c.groupId === userCompany.groupId).map(c => c.id);
+      
+      const aggregatedData: DataContextType = {
+        inventory: [],
+        sales: [],
+        purchaseOrders: [],
+        customers: [],
+        suppliers: [],
+        transactions: [],
+      };
+
+      groupCompanyIds.forEach(id => {
+        const companyData = data[id];
+        if (companyData) {
+          aggregatedData.inventory.push(...companyData.inventory);
+          aggregatedData.sales.push(...companyData.sales);
+          aggregatedData.purchaseOrders.push(...companyData.purchaseOrders);
+          aggregatedData.customers.push(...companyData.customers);
+          aggregatedData.suppliers.push(...companyData.suppliers);
+          aggregatedData.transactions.push(...companyData.transactions);
         }
-    }))
+      });
+      return aggregatedData;
+    }
+
+    // Fallback to single company data
+    return data[currentUser.companyId] || { inventory: [], sales: [], purchaseOrders: [], customers: [], suppliers: [], transactions: [] };
   };
 
-  const addInventoryItem = (item: Omit<InventoryItem, 'id'|'lastUpdated'|'history'>) => {
+
+  const addInventoryItem = (item: Omit<InventoryItem, 'id'|'lastUpdated'|'history'|'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newItem: InventoryItem = {
         ...item,
         id: `item-${Date.now()}`,
         lastUpdated: new Date().toISOString(),
-        history: [{ date: new Date().toISOString(), quantity: item.quantity }]
+        history: [{ date: new 'Date'().toISOString(), quantity: item.quantity }],
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ inventory: [...currentData.inventory, newItem] });
+    const currentData = data[currentUser.companyId] || { inventory: [] };
+    setCompanyData(currentUser.companyId, { inventory: [...currentData.inventory, newItem] });
   };
 
   const removeInventoryItem = (itemId: string) => {
-    const currentData = getCompanyData();
-    setCompanyData({ inventory: currentData.inventory.filter(item => item.id !== itemId) });
+    if (!currentUser?.companyId) return;
+    const itemToRemove = getVisibleData().inventory.find(i => i.id === itemId);
+    if (!itemToRemove) return;
+
+    const ownerCompanyId = itemToRemove.companyId;
+    const companyData = data[ownerCompanyId];
+    if (companyData) {
+      const newInventory = companyData.inventory.filter(item => item.id !== itemId);
+      setCompanyData(ownerCompanyId, { inventory: newInventory });
+    }
   };
 
   const adjustStock = (itemId: string, adjustment: number) => {
-    const currentData = getCompanyData();
-    const newInventory = currentData.inventory.map(item =>
-        item.id === itemId
-          ? { 
-              ...item, 
-              quantity: Math.max(0, item.quantity + adjustment),
-              lastUpdated: new Date().toISOString(),
-              history: [...item.history, { date: new Date().toISOString(), quantity: Math.max(0, item.quantity + adjustment) }]
-            }
-          : item
-      );
-    setCompanyData({ inventory: newInventory });
+    if (!currentUser?.companyId) return;
+    const itemToAdjust = getVisibleData().inventory.find(i => i.id === itemId);
+    if (!itemToAdjust) return;
+
+    const ownerCompanyId = itemToAdjust.companyId;
+    const companyData = data[ownerCompanyId];
+    if (companyData) {
+      const newInventory = companyData.inventory.map(item =>
+          item.id === itemId
+            ? { 
+                ...item, 
+                quantity: Math.max(0, item.quantity + adjustment),
+                lastUpdated: new Date().toISOString(),
+                history: [...item.history, { date: new Date().toISOString(), quantity: Math.max(0, item.quantity + adjustment) }]
+              }
+            : item
+        );
+      setCompanyData(ownerCompanyId, { inventory: newInventory });
+    }
   };
   
   const getItemById = (itemId: string): InventoryItem | undefined => {
-    return getCompanyData().inventory.find(i => i.id === itemId);
+    return getVisibleData().inventory.find(i => i.id === itemId);
   };
 
-  // Sales
-  const addSale = (sale: Omit<Sale, 'id'|'date'>) => {
+  const addSale = (sale: Omit<Sale, 'id'|'date'|'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newSale: Sale = {
         ...sale,
-        id: `INV-00${getCompanyData().sales.length + 1}`,
+        id: `INV-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ sales: [newSale, ...currentData.sales] });
+    const currentData = data[currentUser.companyId] || { sales: [] };
+    setCompanyData(currentUser.companyId, { sales: [newSale, ...currentData.sales] });
   };
 
   const updateSaleStatus = (saleId: string, status: 'Paid' | 'Pending') => {
-    const currentData = getCompanyData();
-    const newSales = currentData.sales.map(s => s.id === saleId ? { ...s, status } : s);
-    setCompanyData({ sales: newSales });
+    const saleToUpdate = getVisibleData().sales.find(s => s.id === saleId);
+    if (!saleToUpdate) return;
+    const ownerCompanyId = saleToUpdate.companyId;
+    const companyData = data[ownerCompanyId];
+    if (companyData) {
+        const newSales = companyData.sales.map(s => s.id === saleId ? { ...s, status } : s);
+        setCompanyData(ownerCompanyId, { sales: newSales });
+    }
   };
 
-  // Purchase Orders
-  const addPurchaseOrder = (po: Omit<PurchaseOrder, 'id' | 'date' | 'status'>) => {
+  const addPurchaseOrder = (po: Omit<PurchaseOrder, 'id' | 'date' | 'status' | 'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newPO: PurchaseOrder = {
         ...po,
-        id: `PO-00${getCompanyData().purchaseOrders.length + 1}`,
+        id: `PO-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
         status: 'Pending',
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ purchaseOrders: [newPO, ...currentData.purchaseOrders] });
+    const currentData = data[currentUser.companyId] || { purchaseOrders: [] };
+    setCompanyData(currentUser.companyId, { purchaseOrders: [newPO, ...currentData.purchaseOrders] });
   };
 
-  const updatePurchaseOrder = (poId: string, poData: Partial<Omit<PurchaseOrder, 'id'>>) => {
-    const currentData = getCompanyData();
-    const newPOs = currentData.purchaseOrders.map(po => po.id === poId ? { ...po, ...poData } : po);
-    setCompanyData({ purchaseOrders: newPOs });
+  const updatePurchaseOrder = (poId: string, poData: Partial<Omit<PurchaseOrder, 'id' | 'companyId'>>) => {
+    const poToUpdate = getVisibleData().purchaseOrders.find(p => p.id === poId);
+    if (!poToUpdate) return;
+    const ownerCompanyId = poToUpdate.companyId;
+    const companyData = data[ownerCompanyId];
+    if (companyData) {
+        const newPOs = companyData.purchaseOrders.map(po => po.id === poId ? { ...po, ...poData } : po);
+        setCompanyData(ownerCompanyId, { purchaseOrders: newPOs });
+    }
   };
 
   const deletePurchaseOrder = (poId: string) => {
-    const currentData = getCompanyData();
-    setCompanyData({ purchaseOrders: currentData.purchaseOrders.filter(po => po.id !== poId) });
+    const poToDelete = getVisibleData().purchaseOrders.find(p => p.id === poId);
+    if (!poToDelete) return;
+    const ownerCompanyId = poToDelete.companyId;
+    const companyData = data[ownerCompanyId];
+    if (companyData) {
+        setCompanyData(ownerCompanyId, { purchaseOrders: companyData.purchaseOrders.filter(po => po.id !== poId) });
+    }
   };
 
-  // Customers
-  const addCustomer = (customer: Omit<Customer, 'id' | 'totalSpent'>) => {
+  const addCustomer = (customer: Omit<Customer, 'id' | 'totalSpent'|'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newCustomer: Customer = {
         ...customer,
-        id: `CUS-0${getCompanyData().customers.length + 1}`,
+        id: `CUS-${Date.now()}`,
         totalSpent: 0,
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ customers: [newCustomer, ...currentData.customers] });
+    const currentData = data[currentUser.companyId] || { customers: [] };
+    setCompanyData(currentUser.companyId, { customers: [newCustomer, ...currentData.customers] });
   };
 
-  const updateCustomer = (customerId: string, customerData: Partial<Omit<Customer, 'id'>>) => {
-    const currentData = getCompanyData();
-    const newCustomers = currentData.customers.map(c => c.id === customerId ? { ...c, ...customerData } : c);
-    setCompanyData({ customers: newCustomers });
+  const updateCustomer = (customerId: string, customerData: Partial<Omit<Customer, 'id'|'companyId'>>) => {
+    const customerToUpdate = getVisibleData().customers.find(c => c.id === customerId);
+    if (!customerToUpdate) return;
+    const ownerCompanyId = customerToUpdate.companyId;
+    const companyData = data[ownerCompanyId];
+    if(companyData) {
+        const newCustomers = companyData.customers.map(c => c.id === customerId ? { ...c, ...customerData } : c);
+        setCompanyData(ownerCompanyId, { customers: newCustomers });
+    }
   };
 
   const deleteCustomer = (customerId: string) => {
-    const currentData = getCompanyData();
-    setCompanyData({ customers: currentData.customers.filter(c => c.id !== customerId) });
+    const customerToDelete = getVisibleData().customers.find(c => c.id === customerId);
+    if (!customerToDelete) return;
+    const ownerCompanyId = customerToDelete.companyId;
+    const companyData = data[ownerCompanyId];
+    if(companyData) {
+        setCompanyData(ownerCompanyId, { customers: companyData.customers.filter(c => c.id !== customerId) });
+    }
   };
 
-  // Suppliers
-  const addSupplier = (supplier: Omit<Supplier, 'id'>) => {
+  const addSupplier = (supplier: Omit<Supplier, 'id' | 'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newSupplier: Supplier = {
         ...supplier,
-        id: `SUP-0${getCompanyData().suppliers.length + 1}`,
+        id: `SUP-${Date.now()}`,
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ suppliers: [newSupplier, ...currentData.suppliers] });
+    const currentData = data[currentUser.companyId] || { suppliers: [] };
+    setCompanyData(currentUser.companyId, { suppliers: [newSupplier, ...currentData.suppliers] });
   };
 
-  const updateSupplier = (supplierId: string, supplierData: Partial<Omit<Supplier, 'id'>>) => {
-    const currentData = getCompanyData();
-    const newSuppliers = currentData.suppliers.map(s => s.id === supplierId ? { ...s, ...supplierData } : s);
-    setCompanyData({ suppliers: newSuppliers });
+  const updateSupplier = (supplierId: string, supplierData: Partial<Omit<Supplier, 'id' | 'companyId'>>) => {
+    const supplierToUpdate = getVisibleData().suppliers.find(s => s.id === supplierId);
+    if (!supplierToUpdate) return;
+    const ownerCompanyId = supplierToUpdate.companyId;
+    const companyData = data[ownerCompanyId];
+    if(companyData) {
+        const newSuppliers = companyData.suppliers.map(s => s.id === supplierId ? { ...s, ...supplierData } : s);
+        setCompanyData(ownerCompanyId, { suppliers: newSuppliers });
+    }
   };
 
   const deleteSupplier = (supplierId: string) => {
-    const currentData = getCompanyData();
-    setCompanyData({ suppliers: currentData.suppliers.filter(s => s.id !== supplierId) });
+    const supplierToDelete = getVisibleData().suppliers.find(s => s.id === supplierId);
+    if (!supplierToDelete) return;
+    const ownerCompanyId = supplierToDelete.companyId;
+    const companyData = data[ownerCompanyId];
+    if(companyData) {
+        setCompanyData(ownerCompanyId, { suppliers: companyData.suppliers.filter(s => s.id !== supplierId) });
+    }
   };
 
-  // Transactions
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
+  const addTransaction = (transaction: Omit<Transaction, 'id' | 'date' | 'companyId'>) => {
+    if (!currentUser?.companyId) return;
     const newTransaction: Transaction = {
         ...transaction,
-        id: `TRN-00${getCompanyData().transactions.length + 1}`,
+        id: `TRN-${Date.now()}`,
         date: new Date().toISOString().split('T')[0],
+        companyId: currentUser.companyId,
     };
-    const currentData = getCompanyData();
-    setCompanyData({ transactions: [newTransaction, ...currentData.transactions] });
+    const currentData = data[currentUser?.companyId] || { transactions: [] };
+    setCompanyData(currentUser.companyId, { transactions: [newTransaction, ...currentData.transactions] });
   };
   
-  const companyData = getCompanyData();
+  const visibleData = getVisibleData();
 
   return (
     <DataContext.Provider value={{
-        inventory: companyData.inventory,
+        inventory: visibleData.inventory,
         addInventoryItem,
         removeInventoryItem,
         adjustStock,
         getItemById,
-        sales: companyData.sales,
+        sales: visibleData.sales,
         addSale,
         updateSaleStatus,
-        purchaseOrders: companyData.purchaseOrders,
+        purchaseOrders: visibleData.purchaseOrders,
         addPurchaseOrder,
         updatePurchaseOrder,
         deletePurchaseOrder,
-        customers: companyData.customers,
+        customers: visibleData.customers,
         addCustomer,
         updateCustomer,
         deleteCustomer,
-        suppliers: companyData.suppliers,
+        suppliers: visibleData.suppliers,
         addSupplier,
         updateSupplier,
         deleteSupplier,
-        transactions: companyData.transactions,
+        transactions: visibleData.transactions,
         addTransaction,
     }}>
       {children}
