@@ -22,11 +22,37 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const getInitialState = <T,>(key: string, fallback: T[]): T[] => {
+    if (typeof window === 'undefined') {
+        return fallback;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (storedValue) {
+        try {
+            return JSON.parse(storedValue);
+        } catch (e) {
+            console.error(`Error parsing ${key} from localStorage`, e);
+            return fallback;
+        }
+    }
+    return fallback;
+};
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [users, setUsers] = useState<User[]>(() => getInitialState('users', initialUsers));
+  const [companies, setCompanies] = useState<Company[]>(() => getInitialState('companies', initialCompanies));
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
+
+  useEffect(() => {
+    // Persist users to localStorage whenever they change
+    localStorage.setItem('users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    // Persist companies to localStorage whenever they change
+    localStorage.setItem('companies', JSON.stringify(companies));
+  }, [companies]);
 
   useEffect(() => {
     // On initial load, check if a user is stored in localStorage to persist session
@@ -35,10 +61,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const user = JSON.parse(storedUser) as User;
         const fullUser = users.find(u => u.id === user.id);
         setCurrentUser(fullUser || null);
+
+        // Also restore company verification status
+        const storedVerification = localStorage.getItem('companyIdVerified');
+        if (storedVerification === 'true' && fullUser && fullUser.companyId) {
+            setCompanyIdVerified(true);
+        }
     } else {
         setCurrentUser(null);
     }
-  }, [users]);
+  }, [users]); // Depend on users to re-check when users list changes
 
   const login = (email: string, password: string): User | null => {
     const user = users.find(u => u.email === email && u.password === password);
@@ -54,6 +86,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setCurrentUser(null);
     setCompanyIdVerified(false);
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('companyIdVerified');
   };
 
   const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>): User | null => {
@@ -72,7 +105,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
     };
 
-    setUsers([...users, newUser]);
+    setUsers(prevUsers => [...prevUsers, newUser]);
     return newUser;
   };
 
@@ -117,7 +150,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const verifyCompanyId = (id: string): boolean => {
     const normalizedId = id.toUpperCase();
-    if (currentUser && companies.some(c => c.id === normalizedId) && currentUser.companyId === normalizedId) {
+    const companyExists = companies.some(c => c.id === normalizedId);
+
+    if (currentUser && companyExists) {
+        const updatedUsers = users.map(user => 
+            user.id === currentUser.id ? { ...user, companyId: normalizedId } : user
+        );
+        setUsers(updatedUsers);
+
         setCompanyIdVerified(true);
         localStorage.setItem('companyIdVerified', 'true');
         return true;
