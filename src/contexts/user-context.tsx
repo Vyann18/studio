@@ -35,36 +35,63 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null | undefined>(undefined);
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
+   useEffect(() => {
+    const initializeAdmin = async () => {
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+      const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+
+      if (adminEmail && adminPassword && auth) {
+        try {
+          // Try to sign in silently. If it fails, the user likely doesn't exist.
+          await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+        } catch (error: any) {
+          if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            // User not found, so create them
+            try {
+              await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
+              console.log('Admin user created successfully.');
+            } catch (createError) {
+              console.error('Error creating admin user:', createError);
+            }
+          }
+        } finally {
+            // Always sign out after the check to not affect manual login
+            if(auth.currentUser?.email === adminEmail) {
+                await signOut(auth);
+            }
+        }
+      }
+    };
+    
+    initializeAdmin();
+  }, []);
+
   useEffect(() => {
     if (!auth) {
-        setCurrentUser(null); // Firebase not configured, treat as logged out
+        setCurrentUser(null); 
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
-            // User is signed in, see if they exist in our app's user list
             const existingUser = users.find(u => u.email === firebaseUser.email);
             if (existingUser) {
                 setCurrentUser(existingUser);
                 localStorage.setItem('currentUser', JSON.stringify(existingUser));
             } else {
-                // New user signed up (e.g., via Google or email for the first time)
                 const tempCompanyId = "EJY1UT"; // Default company for new users
                 const newUser: User = {
                     id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'New User',
+                    name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
                     email: firebaseUser.email!,
-                    role: 'user', // Default role for new sign-ups
+                    role: firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL ? 'admin' : 'user', // Assign admin role
                     avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
                     companyId: tempCompanyId,
                 };
                 
-                // Use functional update to ensure we have the latest state
                 setUsers(prevUsers => {
                   const userExists = prevUsers.some(u => u.email === newUser.email);
-                  if (userExists) {
-                    return prevUsers; // Do nothing if user already added
-                  }
+                  if (userExists) return prevUsers;
+                  
                   const updatedUsers = [...prevUsers, newUser];
                   setCurrentUser(newUser);
                   localStorage.setItem('currentUser', JSON.stringify(newUser));
@@ -72,7 +99,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 });
             }
         } else {
-            // User is signed out
             setCurrentUser(null);
             setCompanyIdVerified(false);
             localStorage.removeItem('currentUser');
@@ -80,7 +106,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []); // removed `users` dependency to prevent re-running on every user list change
+  }, [users]);
 
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -94,11 +120,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // We return a promise that resolves when the user is set.
       return new Promise((resolve, reject) => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-          unsubscribe(); // We only need this to fire once.
+          unsubscribe(); 
           if (firebaseUser) {
             resolve(true);
           } else {
-            // This case should ideally not be hit if signIn was successful, but as a fallback:
             reject(new Error("Login failed: User not found after authentication."));
           }
         });
@@ -113,27 +138,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     if (!auth) return;
     await signOut(auth);
-    // State updates are handled by onAuthStateChanged
   };
 
   const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }): Promise<User | null> => {
     if (!auth || !userData.password) return null;
     
-    if (users.some(u => u.email === userData.email)) {
-        return null; // User already exists in local state, Firebase will also throw an error.
-    }
-
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
-      // onAuthStateChanged will now handle creating the user in our local state.
-      // We can optimistically return a temporary user object or wait for onAuthStateChanged
+      // onAuthStateChanged will handle adding user to local state
       return { 
         id: userCredential.user.uid, 
         name: userData.name,
         email: userData.email,
         role: 'user', 
         avatar: `https://i.pravatar.cc/150?u=${userCredential.user.uid}`,
-        companyId: 'EJY1UT' // Default companyId for new signups
+        companyId: 'EJY1UT' 
       };
     } catch(error) {
       console.error("Signup error:", error);
@@ -146,8 +165,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
-    // This is complex with Firebase, involving re-authentication.
-    // Disabling for now to prevent data inconsistencies.
     console.warn("Password update feature not fully implemented for Firebase auth.");
     return false;
   };
@@ -164,7 +181,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setCurrentUser(updatedCurrentUser);
             localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
         } else {
-            // Current user was deleted
             logout();
         }
     }

@@ -1,30 +1,17 @@
 import type { InventoryItem, User, Category } from './types';
 
-// NOTE: The user list here is for initial state and profile information.
-// Passwords are NOT stored here and are managed exclusively by Firebase Authentication.
+// NOTE: This initial user list is for bootstrapping the UI.
+// The user database is managed by Firebase Authentication.
+// The admin user will be created programmatically if it doesn't exist.
 export const users: User[] = [
+  // This list can be kept for UI bootstrapping or cleared.
+  // Firebase is now the source of truth.
   {
     id: 'user-1',
     name: 'Admin User',
     email: 'adminuser@example.com',
     role: 'admin',
     avatar: 'https://i.pravatar.cc/150?u=admin',
-    companyId: 'EJY1UT'
-  },
-  {
-    id: 'user-2',
-    name: 'Manager User',
-    email: 'manager@example.com',
-    role: 'manager',
-    avatar: 'https://i.pravatar.cc/150?u=manager',
-    companyId: 'EJY1UT'
-  },
-  {
-    id: 'user-3',
-    name: 'Employee User',
-    email: 'employee@example.com',
-    role: 'employee',
-    avatar: 'https://i.pravatar.cc/150?u=employee',
     companyId: 'EJY1UT'
   },
 ];
@@ -154,5 +141,3 @@ export const inventoryItems: InventoryItem[] = [
     ]
   },
 ];
-
-    
