@@ -65,8 +65,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
             companyId: tempCompanyId,
           };
-          const updatedUsers = [...users, newUser];
-          setUsers(updatedUsers);
+          setUsers(prevUsers => [...prevUsers, newUser]);
           setCurrentUser(newUser);
         }
       } else {
