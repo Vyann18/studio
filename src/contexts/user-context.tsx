@@ -18,7 +18,7 @@ type UserContextType = {
   verifyCompanyId: (id: string) => boolean;
   users: User[];
   companies: Company[];
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }) => Promise<User | null>;
   addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
@@ -83,10 +83,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []); // removed `users` dependency to prevent re-running on every user list change
 
 
-  const login = async (email: string, password: string): Promise<User | null> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     if (!auth) {
         console.error("Firebase auth is not initialized.");
-        return null;
+        return false;
     }
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -94,22 +94,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // We return a promise that resolves when the user is set.
       return new Promise((resolve, reject) => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          unsubscribe(); // We only need this to fire once.
           if (firebaseUser) {
-            const appUser = users.find(u => u.email === firebaseUser.email);
-            if (appUser) {
-              unsubscribe();
-              resolve(appUser);
-            }
+            resolve(true);
           } else {
             // This case should ideally not be hit if signIn was successful, but as a fallback:
-            unsubscribe();
             reject(new Error("Login failed: User not found after authentication."));
           }
         });
       });
     } catch (error) {
       console.error("Login Error:", error);
-      return null;
+      return false;
     }
   };
 

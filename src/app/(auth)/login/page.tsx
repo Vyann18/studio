@@ -29,11 +29,11 @@ export default function LoginPage() {
     const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
         try {
-            const loggedInUser = await login(email.trim(), password);
-            if (loggedInUser) {
+            const success = await login(email.trim(), password);
+            if (success) {
                 toast({
                     title: "Login Successful",
-                    description: `Welcome back, ${loggedInUser.name}!`,
+                    description: `Welcome back!`,
                 });
                 router.push('/dashboard');
             } else {
