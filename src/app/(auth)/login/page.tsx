@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -19,30 +20,52 @@ import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useUser();
+    const { login, signInWithGoogle } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = (event: React.FormEvent) => {
+    const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
-        const loggedInUser = login(email.trim(), password);
-
-        if (loggedInUser) {
-            toast({
-                title: "Login Successful",
-                description: `Welcome back, ${loggedInUser.name}!`,
-            });
-            router.push('/dashboard');
-        } else {
-            toast({
+        try {
+            const loggedInUser = await login(email.trim(), password);
+            if (loggedInUser) {
+                toast({
+                    title: "Login Successful",
+                    description: `Welcome back, ${loggedInUser.name}!`,
+                });
+                router.push('/dashboard');
+            } else {
+                 toast({
+                    title: "Login Failed",
+                    description: "Invalid email or password. Please try again.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+             toast({
                 title: "Login Failed",
                 description: "Invalid email or password. Please try again.",
                 variant: "destructive",
             });
         }
     }
+    
+    const handleGoogleLogin = async () => {
+        try {
+            await signInWithGoogle();
+            // onAuthStateChanged will handle navigation and toasts
+            router.push('/dashboard');
+        } catch (error) {
+            toast({
+                title: "Google Sign-In Failed",
+                description: "Could not sign in with Google. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -93,7 +116,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
                 Login
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
                 Login with Google
             </Button>
             </div>

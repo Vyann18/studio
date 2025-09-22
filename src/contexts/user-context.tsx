@@ -4,6 +4,14 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
+import { auth, googleProvider } from '@/lib/firebase';
+import { 
+  onAuthStateChanged, 
+  signOut,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 
 type UserContextType = {
   currentUser: User | null | undefined; // undefined for initial loading state
@@ -11,9 +19,10 @@ type UserContextType = {
   verifyCompanyId: (id: string) => boolean;
   users: User[];
   companies: Company[];
-  login: (email: string, password: string) => User | null;
+  login: (email: string, password: string) => Promise<User | null>;
+  signInWithGoogle: () => void;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>) => User | null;
+  addUser: (user: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }) => Promise<User | null>;
   addCompany: (company: Omit<Company, 'id'> & { id: string }) => void;
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
   removeUser: (userId: string) => void;
@@ -29,51 +38,117 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
   useEffect(() => {
-    // On initial load, check if a user is stored in localStorage to persist session
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-        const user = JSON.parse(storedUser) as User;
-        const fullUser = users.find(u => u.id === user.id);
-        setCurrentUser(fullUser || null);
-    } else {
+    if (!auth) {
         setCurrentUser(null);
+        return;
     }
-  }, [users]);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (firebaseUser) {
+            const existingUser = users.find(u => u.email === firebaseUser.email);
+            if (existingUser) {
+                setCurrentUser(existingUser);
+                localStorage.setItem('currentUser', JSON.stringify(existingUser));
+            } else {
+                // New user signed in (e.g., via Google for the first time)
+                const tempCompanyId = "EJY1UT"; // Default company for new users
+                const newUser: User = {
+                    id: firebaseUser.uid,
+                    name: firebaseUser.displayName || 'New User',
+                    email: firebaseUser.email!,
+                    role: 'user', // Default role for new sign-ups
+                    avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+                    companyId: tempCompanyId,
+                };
+                setUsers(prevUsers => {
+                  const updatedUsers = [...prevUsers, newUser];
+                  setCurrentUser(newUser);
+                  localStorage.setItem('currentUser', JSON.stringify(newUser));
+                  return updatedUsers;
+                });
+            }
+        } else {
+            setCurrentUser(null);
+            localStorage.removeItem('currentUser');
+        }
+    });
 
-  const login = (email: string, password: string): User | null => {
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      setCurrentUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      return user;
-    }
-    return null;
+    return () => unsubscribe();
+  }, []);
+
+
+  const login = async (email: string, password: string): Promise<User | null> => {
+    if (!auth) return null;
+    
+    return new Promise(async (resolve, reject) => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged will handle setting the current user.
+        // We need to wait for currentUser to be updated.
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          if (firebaseUser) {
+            const appUser = users.find(u => u.email === firebaseUser.email);
+            if (appUser) {
+              unsubscribe();
+              resolve(appUser);
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Login Error:", error);
+        reject(error);
+      }
+    });
   };
 
-  const logout = () => {
+  const signInWithGoogle = async () => {
+    if (!auth || !googleProvider) return;
+    try {
+        await signInWithPopup(auth, googleProvider);
+        // onAuthStateChanged will handle the rest
+    } catch (error) {
+        console.error("Google Sign-In Error:", error);
+    }
+  };
+
+
+  const logout = async () => {
+    if (!auth) return;
+    await signOut(auth);
     setCurrentUser(null);
     setCompanyIdVerified(false);
     localStorage.removeItem('currentUser');
   };
 
-  const addUser = (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'>): User | null => {
+  const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId'> & { password?: string }): Promise<User | null> => {
+    if (!auth || !userData.password) return null;
+    
     if (users.some(u => u.email === userData.email)) {
         return null; // User already exists
     }
 
-    // Note: In a real app, companyId would come from the verified company context
-    const tempCompanyId = "EJY1UT"; 
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+      const firebaseUser = userCredential.user;
 
-    const newUser: User = {
-        id: `user-${Date.now()}`,
-        ...userData,
-        companyId: tempCompanyId,
-        role: 'user', // Default role
-        avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
-    };
+      const tempCompanyId = "EJY1UT"; 
 
-    setUsers([...users, newUser]);
-    return newUser;
+      const newUser: User = {
+          id: firebaseUser.uid,
+          name: userData.name,
+          email: userData.email,
+          companyId: tempCompanyId,
+          role: 'user', 
+          avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+      };
+      
+      setUsers(prev => [...prev, newUser]);
+      // onAuthStateChanged will handle setting the current user after signup
+      return newUser;
+
+    } catch(error) {
+      console.error("Signup error:", error);
+      return null;
+    }
   };
 
   const addCompany = (company: Company) => {
@@ -81,21 +156,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
-    const userIndex = users.findIndex(u => u.id === userId && u.password === oldPass);
-    if (userIndex === -1) {
-        return false;
-    }
-
-    const updatedUsers = [...users];
-    updatedUsers[userIndex].password = newPass;
-    setUsers(updatedUsers);
-
-    if (currentUser && currentUser.id === userId) {
-        const updatedCurrentUser = { ...currentUser, password: newPass };
-        setCurrentUser(updatedCurrentUser);
-        localStorage.setItem('currentUser', JSON.stringify(updatedCurrentUser));
-    }
-    return true;
+    // This is complex with Firebase, involving re-authentication.
+    // For now, we'll just show a toast and not implement it.
+    console.warn("Password update feature not fully implemented for Firebase auth.");
+    return false;
   };
 
   const removeUser = (userId: string) => {
@@ -132,6 +196,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         companyIdVerified,
         verifyCompanyId,
         login,
+        signInWithGoogle,
         logout,
         addUser,
         addCompany,

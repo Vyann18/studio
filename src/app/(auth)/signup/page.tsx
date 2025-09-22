@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -41,7 +42,7 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const router = useRouter();
-  const { addUser } = useUser();
+  const { addUser, signInWithGoogle } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -56,8 +57,8 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newUser = addUser({
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const newUser = await addUser({
         name: `${values.firstName} ${values.lastName}`,
         email: values.email,
         password: values.password,
@@ -72,11 +73,26 @@ export default function SignupPage() {
     } else {
         toast({
             title: "Signup Failed",
-            description: "An account with this email already exists.",
+            description: "An account with this email already exists or another error occurred.",
             variant: "destructive",
         });
     }
   }
+
+  const handleGoogleSignup = async () => {
+    try {
+        await signInWithGoogle();
+        // onAuthStateChanged will handle navigation and toasts
+        router.push('/dashboard');
+    } catch (error) {
+        toast({
+            title: "Google Sign-Up Failed",
+            description: "Could not sign up with Google. Please try again.",
+            variant: "destructive",
+        });
+    }
+  };
+
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -155,7 +171,7 @@ export default function SignupPage() {
             <Button type="submit" className="w-full">
                 Create an account
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignup}>
                 Sign up with Google
             </Button>
             </form>
