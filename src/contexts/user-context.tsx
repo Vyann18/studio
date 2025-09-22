@@ -44,30 +44,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {
-        console.warn("Firebase is not configured, skipping auth state change listener.");
-        setCurrentUser(null);
-        return;
+      console.warn('Firebase is not configured, skipping auth state change listener.');
+      setCurrentUser(null);
+      return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        const existingUser = users.find(u => u.email === firebaseUser.email);
-        if (existingUser) {
-          setCurrentUser(existingUser);
-        } else {
-          // New Google user or newly signed up email user
-          const tempCompanyId = "EJY1UT"; // Assign to default company
-          const newUser: User = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || 'New User',
-            email: firebaseUser.email!,
-            role: 'user', // Default role for new sign-ups
-            avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
-            companyId: tempCompanyId,
-          };
-          setUsers(prevUsers => [...prevUsers, newUser]);
-          setCurrentUser(newUser);
-        }
+        setUsers(prevUsers => {
+          const existingUser = prevUsers.find(u => u.email === firebaseUser.email);
+          if (existingUser) {
+            setCurrentUser(existingUser);
+            return prevUsers;
+          } else {
+            // New user from Google Sign-In or just signed up
+            const tempCompanyId = 'EJY1UT'; // Assign to default company for demo
+            const newUser: User = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || 'New User',
+              email: firebaseUser.email!,
+              role: 'user',
+              avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              companyId: tempCompanyId,
+            };
+            setCurrentUser(newUser);
+            return [...prevUsers, newUser];
+          }
+        });
       } else {
         // User is signed out
         setCurrentUser(null);
@@ -76,7 +79,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [users]);
+  }, []);
 
 
   const login = async (email: string, password: string): Promise<User | null> => {
