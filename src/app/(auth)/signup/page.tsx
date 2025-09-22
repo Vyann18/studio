@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
     firstName: z.string().trim().min(1, 'First name is required'),
@@ -44,6 +44,7 @@ export default function SignupPage() {
   const { addUser, signInWithGoogle, currentUser } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -61,12 +62,14 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newUser = addUser({
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    const newUser = await addUser({
         name: `${values.firstName} ${values.lastName}`,
         email: values.email,
         password: values.password,
     });
+    setIsLoading(false);
 
     if (newUser) {
         toast({
@@ -84,6 +87,7 @@ export default function SignupPage() {
   }
   
   const handleGoogleSignIn = async () => {
+    setIsLoading(true);
     try {
         await signInWithGoogle();
         // The useEffect will handle the redirect
@@ -93,6 +97,8 @@ export default function SignupPage() {
             description: "Could not sign up with Google. Please try again.",
             variant: "destructive",
         });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -115,7 +121,7 @@ export default function SignupPage() {
                         <FormItem>
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                            <Input placeholder="Max" {...field} />
+                            <Input placeholder="Max" {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -128,7 +134,7 @@ export default function SignupPage() {
                         <FormItem>
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                            <Input placeholder="Robinson" {...field} />
+                            <Input placeholder="Robinson" {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -142,7 +148,7 @@ export default function SignupPage() {
                     <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                        <Input placeholder="m@example.com" {...field} />
+                        <Input placeholder="m@example.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -156,7 +162,7 @@ export default function SignupPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input type={showPassword ? 'text' : 'password'} {...field} />
+                        <Input type={showPassword ? 'text' : 'password'} {...field} disabled={isLoading} />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
@@ -170,10 +176,12 @@ export default function SignupPage() {
                     </FormItem>
                 )}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create an account
             </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Sign up with Google
             </Button>
             </form>

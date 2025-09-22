@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -24,6 +24,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (currentUser) {
@@ -31,16 +32,18 @@ export default function LoginPage() {
         }
     }, [currentUser, router]);
 
-    const handleLogin = (event: React.FormEvent) => {
+    const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
-        const loggedInUser = login(email.trim(), password);
+        setIsLoading(true);
+        const loggedInUser = await login(email.trim(), password);
+        setIsLoading(false);
 
         if (loggedInUser) {
             toast({
                 title: "Login Successful",
                 description: `Welcome back, ${loggedInUser.name}!`,
             });
-            router.push('/dashboard');
+            // The useEffect will handle the redirect
         } else {
             toast({
                 title: "Login Failed",
@@ -51,6 +54,7 @@ export default function LoginPage() {
     }
 
     const handleGoogleSignIn = async () => {
+        setIsLoading(true);
         try {
             await signInWithGoogle();
             // The useEffect will handle the redirect
@@ -60,6 +64,8 @@ export default function LoginPage() {
                 description: "Could not sign in with Google. Please try again.",
                 variant: "destructive",
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -84,6 +90,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 />
             </div>
             <div className="grid gap-2">
@@ -100,6 +107,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
                     />
                     <button
                         type="button"
@@ -110,10 +118,12 @@ export default function LoginPage() {
                     </button>
                 </div>
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Login
             </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Login with Google
             </Button>
             </div>
