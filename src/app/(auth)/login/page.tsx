@@ -19,7 +19,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login, signInWithGoogle, currentUser } = useUser();
+    const { login, currentUser } = useUser();
     const { toast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -52,23 +52,6 @@ export default function LoginPage() {
             });
         }
     }
-
-    const handleGoogleSignIn = async () => {
-        setIsLoading(true);
-        try {
-            await signInWithGoogle();
-            // The useEffect will handle the redirect
-        } catch (error) {
-            toast({
-                title: "Google Sign-In Failed",
-                description: "Could not sign in with Google. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -121,10 +104,6 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Login
-            </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login with Google
             </Button>
             </div>
         </form>

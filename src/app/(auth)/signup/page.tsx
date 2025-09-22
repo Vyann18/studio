@@ -41,7 +41,7 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const router = useRouter();
-  const { addUser, signInWithGoogle, currentUser } = useUser();
+  const { addUser, currentUser } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,22 +85,6 @@ export default function SignupPage() {
         });
     }
   }
-  
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-        await signInWithGoogle();
-        // The useEffect will handle the redirect
-    } catch (error) {
-        toast({
-            title: "Google Sign-Up Failed",
-            description: "Could not sign up with Google. Please try again.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  };
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -179,10 +163,6 @@ export default function SignupPage() {
             <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create an account
-            </Button>
-            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign up with Google
             </Button>
             </form>
         </Form>

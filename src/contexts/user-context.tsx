@@ -4,9 +4,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { User, Company } from '@/lib/types';
 import { users as initialUsers } from '@/lib/data';
 import { companies as initialCompanies } from '@/lib/companies';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { 
-  signInWithPopup, 
   onAuthStateChanged, 
   signOut,
   signInWithEmailAndPassword,
@@ -27,7 +26,6 @@ type UserContextType = {
   updateUserPassword: (userId: string, oldPass: string, newPass: string) => boolean;
   removeUser: (userId: string) => void;
   setUsers: (users: User[]) => void;
-  signInWithGoogle: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,26 +43,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isFirebaseConfigured()) {
       console.warn('Firebase is not configured, skipping auth state change listener.');
-      setCurrentUser(null);
+      setCurrentUser(null); // Set to null to signify "not logged in"
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        // User is signed in.
         setUsers(prevUsers => {
           const existingUser = prevUsers.find(u => u.email === firebaseUser.email);
           if (existingUser) {
             setCurrentUser(existingUser);
             return prevUsers;
           } else {
-            // New user from Google Sign-In or just signed up
+            // New user from signup.
             const tempCompanyId = 'EJY1UT'; // Assign to default company for demo
             const newUser: User = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || 'New User',
               email: firebaseUser.email!,
               role: 'user',
-              avatar: firebaseUser.photoURL || `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
+              avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
               companyId: tempCompanyId,
             };
             setCurrentUser(newUser);
@@ -90,6 +89,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
+      // onAuthStateChanged will handle setting the current user.
       const appUser = users.find(u => u.email === firebaseUser.email);
       return appUser || null;
     } catch (error) {
@@ -100,23 +100,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     if (isFirebaseConfigured()) {
-        await signOut(auth);
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
     }
-    setCurrentUser(null);
-    setCompanyIdVerified(false);
-  };
-  
-  const signInWithGoogle = async () => {
-    if (!isFirebaseConfigured()) {
-        console.error("Firebase is not configured. Cannot sign in with Google.");
-        throw new Error("Firebase is not configured.");
-    }
-    try {
-        await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-        console.error("Error during Google sign-in:", error);
-        throw error;
-    }
+    // onAuthStateChanged will handle setting user to null.
   };
 
   const addUser = async (userData: Omit<User, 'id' | 'role' | 'avatar' | 'companyId' | 'password'> & { password?: string; name: string }): Promise<User | null> => {
@@ -130,6 +120,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
       const firebaseUser = userCredential.user;
+      // onAuthStateChanged will handle creating the user in the app's state.
+      // We can return a temporary object for immediate feedback if needed.
       const tempCompanyId = "EJY1UT";
       const newUser: User = {
         id: firebaseUser.uid,
@@ -139,7 +131,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         role: 'user', 
         avatar: `https://i.pravatar.cc/150?u=${firebaseUser.uid}`,
       };
-      setUsers(prev => [...prev, newUser]);
       return newUser;
     } catch (error) {
       console.error("Error creating user:", error);
@@ -148,12 +139,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addCompany = (company: Company) => {
-    setCompanies([...companies, company]);
+    setCompanies(prevCompanies => [...prevCompanies, company]);
   };
 
   const updateUserPassword = (userId: string, oldPass: string, newPass: string): boolean => {
-    // This is now more complex with Firebase and would require re-authentication.
-    // For now, we'll keep the mock logic but note it won't affect Firebase auth.
     console.warn("Password update is not fully integrated with Firebase and only affects local mock data.");
     const userIndex = users.findIndex(u => u.id === userId && u.password === oldPass);
     if (userIndex === -1) {
@@ -172,7 +161,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeUser = (userId: string) => {
-    setUsers(users.filter(u => u.id !== userId));
+    setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
   };
   
   const handleSetUsers = (updatedUsers: User[]) => {
@@ -182,6 +171,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (updatedCurrentUser) {
             setCurrentUser(updatedCurrentUser);
         } else {
+            // Current user was deleted, so log out
             logout();
         }
     }
@@ -209,7 +199,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         updateUserPassword,
         removeUser,
         setUsers: handleSetUsers,
-        signInWithGoogle,
     }}>
       {children}
     </UserContext.Provider>
