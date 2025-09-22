@@ -30,6 +30,11 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// A simple check to see if the auth object is a valid Firebase auth instance
+const isFirebaseConfigured = () => {
+    return auth && typeof auth.onAuthStateChanged === 'function';
+};
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [companies, setCompanies] = useState<Company[]>(initialCompanies);
@@ -37,6 +42,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [companyIdVerified, setCompanyIdVerified] = useState(false);
 
   useEffect(() => {
+    if (!isFirebaseConfigured()) {
+        console.warn("Firebase is not configured, skipping auth state change listener.");
+        // If Firebase is not set up, we can't determine the auth state.
+        // We'll assume the user is logged out.
+        setCurrentUser(null);
+        return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         // User is signed in with Firebase
@@ -84,13 +97,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await signOut(auth);
+    if (isFirebaseConfigured()) {
+        await signOut(auth);
+    }
     setCurrentUser(null);
     setCompanyIdVerified(false);
     localStorage.removeItem('currentUser');
   };
   
   const signInWithGoogle = async () => {
+    if (!isFirebaseConfigured()) {
+        console.error("Firebase is not configured. Cannot sign in with Google.");
+        throw new Error("Firebase is not configured.");
+    }
     try {
         await signInWithPopup(auth, googleProvider);
         // onAuthStateChanged will handle setting the user
