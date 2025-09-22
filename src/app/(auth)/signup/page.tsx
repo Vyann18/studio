@@ -25,8 +25,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { useUser } from '@/contexts/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
     firstName: z.string().trim().min(1, 'First name is required'),
@@ -42,10 +43,17 @@ const formSchema = z.object({
 
 export default function SignupPage() {
   const router = useRouter();
-  const { addUser } = useUser();
+  const { addUser, currentUser, signInWithGoogle } = useUser();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  useEffect(() => {
+    if (currentUser) {
+        router.push('/dashboard');
+    }
+  }, [currentUser, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,11 +66,15 @@ export default function SignupPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+
+    setIsLoading(true);
+>>>>>>> 00b6da4d8b36e4b5cffe0ed8d2625db650d1e02f
     const newUser = await addUser({
         name: `${values.firstName} ${values.lastName}`,
         email: values.email,
         password: values.password,
     });
+    setIsLoading(false);
 
     if (newUser) {
         toast({
@@ -78,6 +90,25 @@ export default function SignupPage() {
         });
     }
   }
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    const user = await signInWithGoogle();
+    setIsGoogleLoading(false);
+    if (user) {
+        toast({
+            title: "Sign Up Successful",
+            description: `Welcome, ${user.name}!`,
+        });
+        // The useEffect will redirect to /dashboard
+    } else {
+        toast({
+            title: "Google Sign-In Failed",
+            description: "Could not sign in with Google. Please try again.",
+            variant: "destructive",
+        });
+    }
+}
 
   return (
     <Card className="mx-auto max-w-sm">
@@ -98,7 +129,7 @@ export default function SignupPage() {
                         <FormItem>
                         <FormLabel>First name</FormLabel>
                         <FormControl>
-                            <Input placeholder="Max" {...field} />
+                            <Input placeholder="Max" {...field} disabled={isLoading || isGoogleLoading} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -111,7 +142,7 @@ export default function SignupPage() {
                         <FormItem>
                         <FormLabel>Last name</FormLabel>
                         <FormControl>
-                            <Input placeholder="Robinson" {...field} />
+                            <Input placeholder="Robinson" {...field} disabled={isLoading || isGoogleLoading} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -125,7 +156,7 @@ export default function SignupPage() {
                     <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                        <Input placeholder="m@example.com" {...field} />
+                        <Input placeholder="m@example.com" {...field} disabled={isLoading || isGoogleLoading} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -139,7 +170,7 @@ export default function SignupPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input type={showPassword ? 'text' : 'password'} {...field} />
+                        <Input type={showPassword ? 'text' : 'password'} {...field} disabled={isLoading || isGoogleLoading} />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
@@ -153,11 +184,32 @@ export default function SignupPage() {
                     </FormItem>
                 )}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create an account
             </Button>
             </form>
         </Form>
+        <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                    Or sign up with
+                </span>
+            </div>
+        </div>
+        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+            {isGoogleLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21.35 11.1H12.18V13.83H18.69C18.36 17.64 15.19 19.27 12.19 19.27C8.36 19.27 5.03 16.25 5.03 12.5C5.03 8.75 8.36 5.73 12.19 5.73C14.03 5.73 15.6 6.33 16.85 7.45L19.09 5.21C17.21 3.49 14.86 2.5 12.19 2.5C6.92 2.5 2.5 6.91 2.5 12.5C2.5 18.09 6.92 22.5 12.19 22.5C17.6 22.5 21.5 18.33 21.5 12.75C21.5 12.17 21.45 11.63 21.35 11.1Z" />
+                </svg>
+            )}
+            Google
+        </Button>
         <div className="mt-4 text-center text-sm">
           Already have an account?{' '}
           <Link href="/login" className="underline">
